@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles del Evento</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Detalles del Evento</h2>
+
+        <!-- Botones encima de la tabla -->
+        <div class="mb-3">
+            <button class="btn btn-primary" data-toggle="modal" data-target="#confirmModal" 
+                    data-siguiente-estado="{{ siguiente_estado }}">
+                Cambiar Estado
+            </button>
+
+            <a href="{{ url_for('main.ver_eventos') }}" class="btn btn-secondary ml-2">Volver</a>
+        </div>
+
+        <!-- Lista de detalles del evento -->
+        <ul class="list-group">
+            <li class="list-group-item"><strong>ID:</strong> {{ evento.id_evento }}</li>
+            <li class="list-group-item"><strong>Nombre:</strong> {{ evento.nombre }}</li>
+            <li class="list-group-item"><strong>Lugar:</strong> {{ evento.lugar }}</li>
+            <li class="list-group-item"><strong>Fecha:</strong> {{ evento.fecha }}</li>
+            <li class="list-group-item"><strong>Estado:</strong> {{ evento.estado }}</li>
+            <li class="list-group-item"><strong>Asistentes:</strong> 
+                {% if evento.asistentes %}
+                    <ul>
+                        {% for asistente in evento.asistentes %}
+                            <li>{{ asistente }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <span>No hay asistentes registrados.</span>
+                {% endif %}
+            </li>
+        </ul>
+    </div>
+
+    <!-- Modal de confirmación -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirmar Cambio de Estado</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ¿Estás seguro de que deseas cambiar el estado a <strong id="nuevoEstado"></strong>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <form method="POST" id="estadoForm" action="{{ url_for('main.cambiar_estado_evento', evento_id=evento.id_evento) }}">
+                        {{ form.hidden_tag() if form }}
+                        <button type="submit" class="btn btn-primary">Aceptar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // JavaScript para actualizar el texto del modal según el estado siguiente
+        const confirmModal = document.getElementById('confirmModal');
+        confirmModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;  // Botón que activó el modal
+            const nuevoEstado = button.getAttribute('data-siguiente-estado');  // Obtener el siguiente estado
+            const nuevoEstadoTexto = document.getElementById('nuevoEstado');  // Elemento donde se muestra el estado
+            nuevoEstadoTexto.textContent = nuevoEstado;  // Cambiar el texto del modal
+        });
+    </script>
+</body>
+</html>

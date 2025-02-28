@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Administrar Usuarios</title>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Administrar Usuarios</h1>
+
+        <table class="table table-bordered table-striped mt-4">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Email</th>
+                    <th>Apodo</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                <tr>
+                    <td>{{ usuario.id }}</td>
+                    <td>{{ usuario.nombre }}</td>
+                    <td>{{ usuario.apellido }}</td>
+                    <td>{{ usuario.email }}</td>
+                    <td>{{ usuario.apodo }}</td>
+                    <td>{{ usuario.tipo_usuario }}</td>
+                    <td>
+                        <span class="badge {{ 'badge-success' if usuario.is_active else 'badge-danger' }}">
+                            {{ 'Activo' if usuario.is_active else 'Inactivo' }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="{{ url_for('main.toggle_usuario', usuario_id=usuario.id, action='activar') }}" class="btn btn-success btn-sm">
+                            Activar
+                        </a>
+                        <a href="{{ url_for('main.toggle_usuario', usuario_id=usuario.id, action='desactivar') }}" class="btn btn-warning btn-sm">
+                            Desactivar
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="text-center mt-4">
+            <a href="{{ url_for('main.inicio_admin') }}" class="btn btn-secondary">Volver al inicio</a>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

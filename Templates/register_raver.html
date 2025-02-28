@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Registro de Raver</title>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Registro de Raver</h1>
+        
+        
+
+        <form method="POST" action="{{ url_for('main.register_raver') }}" class="p-4 bg-white rounded shadow-sm">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.nombre.label }}
+                {{ form.nombre() }}
+                {% if form.nombre.errors %}
+                    <div class="error">{{ form.nombre.errors[0] }}</div>
+                {% endif %}
+            </div>
+        
+            <div class="form-group">
+                {{ form.apellido.label }}
+                {{ form.apellido() }}
+                {% if form.apellido.errors %}
+                    <div class="error">{{ form.apellido.errors[0] }}</div>
+                {% endif %}
+            </div>
+        
+            <div class="form-group">
+                {{ form.email.label }}
+                {{ form.email() }}
+                {% if form.email.errors %}
+                    <div class="error">{{ form.email.errors[0] }}</div>
+                {% endif %}
+            </div>
+        
+            <div class="form-group">
+                {{ form.apodo.label }}
+                {{ form.apodo() }}
+                {% if form.apodo.errors %}
+                    <div class="error">{{ form.apodo.errors[0] }}</div>
+                {% endif %}
+            </div>
+        
+            <div class="form-group">
+                {{ form.password.label }}
+                {{ form.password() }}
+                {% if form.password.errors %}
+                    <div class="error">{{ form.password.errors[0] }}</div>
+                {% endif %}
+            </div>
+        
+            <div class="form-group">
+                {{ form.confirm_password.label }}
+                {{ form.confirm_password() }}
+                {% if form.confirm_password.errors %}
+                    <div class="error">{{ form.confirm_password.errors[0] }}</div>
+                {% endif %}
+            </div>
+        
+            <div class="form-group">
+                {{ form.rut.label }}
+                {{ form.rut() }}
+                {% if form.rut.errors %}
+                    <div class="error">{{ form.rut.errors[0] }}</div>
+                {% endif %}
+            </div>
+        
+            <div class="form-group">
+                {{ form.submit() }}
+            </div>
+        </form>
+        
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

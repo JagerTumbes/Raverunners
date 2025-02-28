@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escanear Código QR</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Escanear Código QR del Raver</h2>
+        <p>Usa la cámara para escanear el código QR del asistente.</p>
+
+        <!-- Contenedor para el escáner de QR -->
+        <div id="qr-scanner" style="position: relative; width: 100%; max-width: 500px; margin: 0 auto;">
+            <video id="qr-video" style="width: 100%; border: 2px solid #ccc;"></video>
+            <canvas id="qr-canvas" style="display: none;"></canvas> <!-- Canvas oculto para capturar la foto -->
+        </div>
+
+        <!-- Botón para tomar una foto -->
+        <button id="takePhotoButton" class="btn btn-primary mt-3">Tomar Foto</button>
+
+        <!-- Mensaje de estado -->
+        <p id="qr-status" class="mt-3"></p>
+    </div>
+
+    <!-- Incluir la librería ZXing -->
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+
+    <script>
+        // Elementos del DOM
+        const video = document.getElementById("qr-video");
+        const canvas = document.getElementById("qr-canvas");
+        const qrStatus = document.getElementById("qr-status");
+        const takePhotoButton = document.getElementById("takePhotoButton");
+
+        // Función para iniciar la cámara
+        async function startCamera() {
+            try {
+                // Obtener acceso a la cámara
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = stream;
+                video.play();
+                qrStatus.textContent = "Cámara iniciada. Coloca el código QR frente a la cámara.";
+            } catch (err) {
+                qrStatus.textContent = "Error al acceder a la cámara: " + err.message;
+                console.error("Error al acceder a la cámara:", err);
+            }
+        }
+
+        // Función para tomar una foto
+        function takePhoto() {
+            console.log("Tomando foto..."); // Depuración
+
+            // Configurar el canvas con las dimensiones del video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            // Dibujar el frame actual del video en el canvas
+            const context = canvas.getContext("2d");
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            console.log("Foto tomada y dibujada en el canvas."); // Depuración
+
+            // Obtener la imagen del canvas como una URL de datos
+            const imageData = canvas.toDataURL("image/png");
+
+            console.log("Imagen convertida a data URL:", imageData); // Depuración
+
+            // Analizar la imagen en busca de un código QR
+            analyzeImage(imageData);
+        }
+
+        // Función para analizar la imagen en busca de un código QR
+        async function analyzeImage(imageData) {
+            try {
+                console.log("Analizando imagen..."); // Depuración
+
+                // Crear una instancia de CodeReader
+                const codeReader = new ZXing.BrowserQRCodeReader();
+
+                // Decodificar la imagen
+                const result = await codeReader.decodeFromImage(undefined, imageData);
+
+                if (result) {
+                    qrStatus.textContent = "Código QR escaneado: " + result.text;
+                    sendQRCode(result.text); // Enviar el código QR al backend
+                } else {
+                    qrStatus.textContent = "No se detectó ningún código QR en la imagen.";
+                }
+            } catch (err) {
+                qrStatus.textContent = "Error al analizar la imagen: " + err.message;
+                console.error("Error al analizar la imagen:", err);
+            }
+        }
+
+        // Función para enviar el código QR al backend
+        function sendQRCode(codigoQR) {
+            fetch('{{ url_for("main.procesar_qr") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ codigoQR })
+            })
+            .then(response => {
+                if (response.ok) return response.json();
+                throw new Error("Error al enviar el código QR.");
+            })
+            .then(data => {
+                alert(data.message || "Código QR procesado exitosamente.");
+            })
+            .catch(err => {
+                console.error("Error al enviar el QR:", err);
+                alert("Ocurrió un error al procesar el código QR.");
+            });
+        }
+
+        // Iniciar la cámara al cargar la página
+        startCamera();
+
+        // Tomar una foto al hacer clic en el botón
+        takePhotoButton.addEventListener("click", takePhoto);
+    </script>
+</body>
+</html>

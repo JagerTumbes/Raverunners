@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio Admin</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h2>Bienvenido al Panel de Administración</h2>
+
+    <p>Hola, {{ current_user.nombre }} {{ current_user.apellido }}. Estás logueado como administrador.</p>
+
+    <ul>
+        <div class="mb-3">
+            <a href="{{ url_for('main.crear_funcionario') }}" class="btn btn-primary">Crear Funcionario</a>
+        </div>
+
+        <div class="mb-3">
+            <a href="{{ url_for('main.admin_usuarios') }}" class="btn btn-primary">Ver Usuarios</a>
+        </div>
+
+        <!-- Añadir más opciones de administración aquí -->
+        <div class="mb-3">
+            <a href="{{ url_for('main.logout') }}" class="btn btn-danger">Cerrar sesión</a>
+        </div>
+
+        <div class="mb-3">
+            <a href="{{ url_for('main.crear_evento') }}" class="btn btn-success">Crear Evento</a>
+        </div>
+
+        <div class="mb-3">
+            <a href="{{ url_for('main.ver_eventos') }}" class="btn btn-primary">Ver Eventos</a>
+        </div>
+
+        <div class="mb-3">
+            <a href="{{ url_for('main.escanear_qr') }}" class="btn btn-primary">Escanear Código QR</a>
+        </div>
+    </ul>
+
+    <!-- Puedes agregar más elementos para el panel de administración -->
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Evento</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Crear Evento</h2>
+
+
+        <form method="POST" action="{{ url_for('main.crear_evento') }}">
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre del Evento</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" required>
+            </div>
+            <div class="mb-3">
+                <label for="lugar" class="form-label">Lugar del Evento</label>
+                <input type="text" class="form-control" id="lugar" name="lugar" required>
+            </div>
+            <div class="mb-3">
+                <label for="fecha" class="form-label">Fecha del Evento</label>
+                <input type="date" class="form-control" id="fecha" name="fecha" required>
+            </div>
+            <div class="mb-3">
+                <label for="estado" class="form-label">Estado del Evento</label>
+                <select class="form-select" id="estado" name="estado">
+                    <option value="preparacion" selected>Preparación</option>
+                    <option value="ocurriendo">Ocurriendo</option>
+                    <option value="finalizado">Finalizado</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Crear Evento</button>
+            <a href="{{ url_for('main.inicio_admin') }}" class="btn btn-secondary">Volver</a>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

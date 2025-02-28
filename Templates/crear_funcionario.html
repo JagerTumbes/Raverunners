@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Crear Funcionario</title>
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Crear Funcionario</h2>
+        
+        <form method="POST" action="{{ url_for('main.crear_funcionario') }}" class="p-4 bg-white rounded shadow-sm">
+            <!-- CSRF Token (si usas Flask-WTF) -->
+            {{ form.hidden_tag() }}
+
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre</label>
+                {{ form.nombre(class_="form-control", id="nombre") }}
+            </div>
+
+            <div class="mb-3">
+                <label for="apellido" class="form-label">Apellido</label>
+                {{ form.apellido(class_="form-control", id="apellido") }}
+            </div>
+
+            <div class="mb-3">
+                <label for="apodo" class="form-label">Apodo</label>
+                {{ form.apodo(class_="form-control", id="apodo") }}
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Correo Electrónico</label>
+                {{ form.email(class_="form-control", id="email") }}
+            </div>
+
+            <div class="mb-3">
+                <label for="rut" class="form-label">RUT</label>
+                {{ form.rut(class_="form-control", id="rut") }}
+                {% for error in form.rut.errors %}
+                    <span class="error text-danger">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                {{ form.password(class_="form-control", id="password") }}
+            </div>
+
+            <div class="mb-3">
+                <label for="confirm_password" class="form-label">Confirmar Contraseña</label>
+                {{ form.confirm_password(class_="form-control", id="confirm_password") }}
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Crear Funcionario</button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
