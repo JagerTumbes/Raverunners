@@ -1,7 +1,7 @@
 from datetime import datetime
 import os
 from flask import Blueprint, jsonify, request, current_app
-from flask import render_template, redirect, url_for, flash
+from flask import render_template, redirect, url_for, flash, render_template_string
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from wtforms import ValidationError
@@ -40,7 +40,6 @@ def validate_rut(form, field):
 def index():
     return redirect(url_for('main.login'))  # Redirigir a la página de login
 
-# Página de login
 @main_bp.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -62,6 +61,8 @@ def login():
                 return redirect(url_for('main.inicio_raver'))  # Redirigir al inicio del raver
             elif usuario.tipo_usuario == 'funcionario':
                 return redirect(url_for('main.inicio_funcionario'))  # Redirigir al inicio del funcionario
+            elif usuario.tipo_usuario == 'dj':
+                return redirect(url_for('main.inicio_dj'))  # Redirigir al inicio del DJ
             else:
                 return redirect(url_for('main.index'))  # Si no es ninguno de los anteriores, redirigir a la página principal
 
@@ -462,6 +463,7 @@ def crear_dj():
         nuevo_usuario = Usuario(
             nombre=request.form.get('nombre'),
             apellido=request.form.get('apellido'),
+            apodo=nombre_dj,
             email=request.form.get('email'),
             password=generate_password_hash(request.form.get('password')),
             tipo_usuario='dj',
@@ -471,12 +473,60 @@ def crear_dj():
         db.session.add(nuevo_usuario)
         db.session.commit()
 
+        # Crear el nuevo DJ asociado al usuario
         nuevo_dj = DJ(nombre_dj=nombre_dj, descripcion=descripcion, foto=foto_path, id=nuevo_usuario.id)
         db.session.add(nuevo_dj)
         db.session.commit()
+
+        # Generar el archivo HTML personalizado para el DJ
+        dj_html_content = f"""
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Página de {nombre_dj}</title>
+            <link rel="stylesheet" href="{{{{ url_for('static', filename='css/styles.css') }}}}">
+        </head>
+        <body>
+            <h1>Bienvenido a la página de {nombre_dj}</h1>
+            <p>Esta es la página personalizada de {nombre_dj}.</p>
+            
+                <img src="{{{{ url_for('static', filename='images/dj/{foto_path}') }}}}" alt="{nombre_dj}" style="max-width: 300px;">
+            
+            <!-- Puedes agregar más contenido aquí -->
+        </body>
+        </html>
+        """
+
+        # Guardar el archivo HTML en la carpeta templates/djs/
+        dj_html_path = os.path.join('templates', 'djs', f'dj_{nuevo_usuario.id}.html')
+        with open(dj_html_path, 'w', encoding='utf-8') as file:
+            file.write(render_template_string(dj_html_content))
 
         flash("DJ creado exitosamente.", "success")
         return redirect(url_for('main.listar_djs'))
 
     return render_template('crear_dj.html')
 
+@main_bp.route('/inicio/dj')
+@login_required  # Solo usuarios logueados pueden acceder
+def inicio_dj():
+    # Verificar si el usuario es un DJ
+    if current_user.tipo_usuario != 'dj':
+        flash('No tienes permisos para acceder a esta página.', 'danger')
+        return redirect(url_for('main.index'))  # Redirigir a la página principal si no es DJ
+
+    return render_template('inicio_dj.html')  # Renderizar la página de inicio del DJ
+
+@main_bp.route('/dj/<int:dj_id>')
+def pagina_personalizada_dj(dj_id):
+    # Construir la ruta al archivo HTML personalizado
+    dj_html_path = f'djs/dj_{dj_id}.html'
+
+    try:
+        # Renderizar el archivo HTML personalizado
+        return render_template(dj_html_path)
+    except Exception as e:
+        # Si el archivo no existe, mostrar un error 404
+        return render_template('404.html'), 404

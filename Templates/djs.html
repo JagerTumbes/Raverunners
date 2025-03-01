@@ -16,14 +16,15 @@
         <div class="card-container">
             {% for dj in djs %}
                 <div class="card">
-                    {% if dj.foto %}
-                        <img src="{{ url_for('static', filename='images/dj/' + dj.foto) }}" class="card-img-top" alt="{{ dj.nombre_dj }}">
-                    {% else %}
-                        <img src="{{ url_for('static', filename='images/default.jpg') }}" class="card-img-top" alt="Imagen por defecto">
-                    {% endif %}
+                    <a href="{{ url_for('main.pagina_personalizada_dj', dj_id=dj.id) }}">
+                        {% if dj.foto %}
+                            <img src="{{ url_for('static', filename='images/dj/' + dj.foto) }}" class="card-img-top" alt="{{ dj.nombre_dj }}">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/default.jpg') }}" class="card-img-top" alt="Imagen por defecto">
+                        {% endif %}
+                    </a>
                     <div class="card-body">
                         <h5 class="card-title">{{ dj.nombre_dj }}</h5>
-                        <p class="card-text">{{ dj.descripcion }}</p>
                     </div>
                 </div>
             {% endfor %}
