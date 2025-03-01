@@ -1,12 +1,15 @@
 from datetime import datetime
-from flask import Blueprint, jsonify, request
+import os
+from flask import Blueprint, jsonify, request, current_app
 from flask import render_template, redirect, url_for, flash
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from wtforms import ValidationError
-from .models import Evento, Funcionario, Raver, Usuario
+from .models import Evento, Funcionario, Raver, Usuario, DJ
 from .forms import CambiarEstadoForm, CrearFuncionarioForm, LoginForm, RegisterRaverForm
 from sqlalchemy.orm.attributes import flag_modified
+from werkzeug.utils import secure_filename
+
 from . import db
 from pyzbar.pyzbar import decode
 
@@ -423,4 +426,57 @@ def procesar_qr():
         print(f"Error inesperado: {str(e)}")  # Log de la excepción
         flash(f"Ocurrió un error al procesar el QR: {str(e)}", "danger")
         return jsonify({"message": f"Error: {str(e)}"}), 500
+
+
+@main_bp.route('/djs', methods=['GET'])
+@login_required
+def listar_djs():
+    if current_user.tipo_usuario != 'admin':
+        flash("No tienes permisos para acceder a esta página.", "danger")
+        return redirect(url_for('main.index'))
+
+    djs = DJ.query.all()
+    return render_template('djs.html', djs=djs)
+
+@main_bp.route('/crear_dj', methods=['GET', 'POST'])
+@login_required
+def crear_dj():
+    if current_user.tipo_usuario != 'admin':
+        flash("No tienes permisos para acceder a esta página.", "danger")
+        return redirect(url_for('main.index'))
+
+    if request.method == 'POST':
+        nombre_dj = request.form.get('nombre_dj')
+        descripcion = request.form.get('descripcion')
+        foto = request.files.get('foto')
+
+        # Guardar la foto si se proporciona
+        foto_path = None
+        if foto:
+            foto_filename = secure_filename(foto.filename)
+            foto_subfolder = 'dj'  # Subcarpeta específica para DJs
+            foto.save(os.path.join(current_app.config['UPLOAD_FOLDER'], foto_subfolder, foto_filename))
+            foto_path = foto_filename  # Solo guardar el nombre del archivo
+
+        # Crear un nuevo usuario de tipo DJ
+        nuevo_usuario = Usuario(
+            nombre=request.form.get('nombre'),
+            apellido=request.form.get('apellido'),
+            email=request.form.get('email'),
+            password=generate_password_hash(request.form.get('password')),
+            tipo_usuario='dj',
+            rut=request.form.get('rut'),
+            is_active=True
+        )
+        db.session.add(nuevo_usuario)
+        db.session.commit()
+
+        nuevo_dj = DJ(nombre_dj=nombre_dj, descripcion=descripcion, foto=foto_path, id=nuevo_usuario.id)
+        db.session.add(nuevo_dj)
+        db.session.commit()
+
+        flash("DJ creado exitosamente.", "success")
+        return redirect(url_for('main.listar_djs'))
+
+    return render_template('crear_dj.html')
 

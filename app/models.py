@@ -103,3 +103,13 @@ class Evento(db.Model):
         self.estado = estado
         self.asistentes = asistentes if asistentes is not None else []
 
+class DJ(db.Model):
+    __tablename__ = 'djs'
+
+    id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), primary_key=True)
+    nombre_dj = db.Column(db.String(80), nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)
+    foto = db.Column(db.String(255), nullable=True)
+
+    def __repr__(self):
+        return f"<DJ {self.nombre_dj}>"

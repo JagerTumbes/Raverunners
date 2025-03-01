@@ -6,40 +6,47 @@
     <title>Inicio Admin</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h2>Bienvenido al Panel de Administración</h2>
+    {% include 'header.html' %}
 
-    <p>Hola, {{ current_user.nombre }} {{ current_user.apellido }}. Estás logueado como administrador.</p>
+    <div class="content">
+        <h2>Bienvenido al Panel de Administración</h2>
+        <p>Hola, {{ current_user.nombre }} {{ current_user.apellido }}. Estás logueado como administrador.</p>
 
-    <ul>
-        <div class="mb-3">
+        <div class="btn-group">
             <a href="{{ url_for('main.crear_funcionario') }}" class="btn btn-primary">Crear Funcionario</a>
-        </div>
-
-        <div class="mb-3">
             <a href="{{ url_for('main.admin_usuarios') }}" class="btn btn-primary">Ver Usuarios</a>
-        </div>
-
-        <!-- Añadir más opciones de administración aquí -->
-        <div class="mb-3">
-            <a href="{{ url_for('main.logout') }}" class="btn btn-danger">Cerrar sesión</a>
-        </div>
-
-        <div class="mb-3">
-            <a href="{{ url_for('main.crear_evento') }}" class="btn btn-success">Crear Evento</a>
-        </div>
-
-        <div class="mb-3">
+            <a href="{{ url_for('main.crear_evento') }}" class="btn btn-primary">Crear Evento</a>
             <a href="{{ url_for('main.ver_eventos') }}" class="btn btn-primary">Ver Eventos</a>
-        </div>
-
-        <div class="mb-3">
             <a href="{{ url_for('main.escanear_qr') }}" class="btn btn-primary">Escanear Código QR</a>
+            <a href="{{ url_for('main.listar_djs') }}" class="btn btn-primary">Ver DJs</a> <!-- Nuevo botón para DJs -->
         </div>
-    </ul>
+    </div>
 
-    <!-- Puedes agregar más elementos para el panel de administración -->
+    <footer class="footer">
+        <!-- Puedes agregar información adicional en el pie de página si lo deseas -->
+    </footer>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>

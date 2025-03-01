@@ -416,3 +416,43 @@ th:nth-child(4), td:nth-child(4) {
     max-width: 100%;
     height: 300px; /* Puedes ajustar esta altura según lo necesites */
 }
+
+/* Estilos para las tarjetas de DJ */
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.card {
+    width: 300px;
+    margin: 15px;
+    border: none;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: transparent; /* Asegura que el fondo sea transparente */
+}
+
+.card img {
+    height: 300px;
+    object-fit: cover;
+    width: 100%;
+    background-color: transparent; /* Asegura que el fondo de la imagen sea transparente */
+}
+
+.card-body {
+    text-align: center;
+    padding: 15px;
+    background-color: #fff; /* Mantén el fondo blanco solo para el cuerpo de la tarjeta */
+}
+
+.card-title {
+    font-size: 1.25em;
+    margin-top: 10px;
+    color: #333;
+}
+
+.card-text {
+    color: #666;
+}
+

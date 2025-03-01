@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear DJ</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script>
+        function validateRut(input) {
+            const rut = input.value;
+            if (rut.length !== 9) {
+                alert("El RUT debe tener exactamente 9 dígitos.");
+                input.focus();
+            }
+        }
+    </script>
+</head>
+<body>
+    {% include 'header.html' %}
+
+    <div class="content">
+        <h2>Crear DJ</h2>
+        <form action="{{ url_for('main.crear_dj') }}" method="POST" enctype="multipart/form-data" onsubmit="validateRut(document.getElementById('rut'))">
+            <!-- Campos de usuario -->
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" required>
+            </div>
+            <div class="form-group">
+                <label for="apellido">Apellido</label>
+                <input type="text" class="form-control" id="apellido" name="apellido" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="rut">RUT</label>
+                <input type="text" class="form-control" id="rut" name="rut" required onblur="validateRut(this)">
+            </div>
+
+            <!-- Campos específicos de DJ -->
+            <div class="form-group">
+                <label for="nombre_dj">Nombre de DJ</label>
+                <input type="text" class="form-control" id="nombre_dj" name="nombre_dj" required>
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripción</label>
+                <textarea class="form-control" id="descripcion" name="descripcion" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="foto">Foto</label>
+                <input type="file" class="form-control-file" id="foto" name="foto">
+            </div>
+            <button type="submit" class="btn btn-primary">Crear DJ</button>
+        </form>
+    </div>
+
+    <footer class="footer">
+        <!-- Puedes agregar información adicional en el pie de página si lo deseas -->
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
