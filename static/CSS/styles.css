@@ -441,7 +441,7 @@ th:nth-child(4), td:nth-child(4) {
     border-radius: 8px;
     overflow: hidden;
     background-color: transparent; /* Asegura que el fondo sea transparente */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
+    
 }
 
 .card img {
@@ -466,4 +466,59 @@ th:nth-child(4), td:nth-child(4) {
 
 .card-text {
     color: #666;
+}
+
+/* Estilo específico para el calendario */
+.calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-top: 20px;
+}
+
+.calendar div {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.calendar .day {
+    background-color: #f9f9f9;
+}
+
+.calendar .event {
+    background-color: #6A0DAD; /* Morado para eventos */
+    color: white;
+    font-weight: bold;
+}
+
+/* Botones de navegación */
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-controls button {
+    background-color: #0074D9; /* Azul */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.calendar-controls button:hover {
+    background-color: #6A0DAD; /* Morado al pasar el mouse */
+}
+
+/* Mensaje de error */
+.error-message {
+    color: red;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 20px;
 }

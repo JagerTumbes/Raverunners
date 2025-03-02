@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventos del {{ fecha }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container mt-5">
+        <h1>Eventos del {{ fecha }}</h1>
+
+        <!-- Lista de eventos -->
+        <ul class="list-group">
+            {% if eventos %}
+                {% for evento in eventos %}
+                    <li class="list-group-item">
+                        <strong>{{ evento.nombre }}</strong> - {{ evento.lugar }}
+                        <br>
+                        <small>Estado: {{ evento.estado }}</small>
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li class="list-group-item">No hay eventos programados para este día.</li>
+            {% endif %}
+        </ul>
+
+        <!-- Botón para regresar al calendario -->
+        <a href="{{ url_for('main.calendario') }}" class="btn btn-primary mt-3">Volver al Calendario</a>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

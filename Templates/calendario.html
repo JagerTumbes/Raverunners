@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Eventos</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container mt-5">
+        <h1>Calendario de Eventos</h1>
+
+        <!-- Controles del calendario -->
+        <div class="calendar-controls">
+            <button id="prev-month">Mes Anterior</button>
+            <h3 id="current-month"></h3>
+            <button id="next-month">Mes Siguiente</button>
+        </div>
+
+        <!-- Contenedor del calendario -->
+        <div id="calendar" class="calendar"></div>
+
+        <!-- Mensaje de error -->
+        <div id="error-message" class="error-message" style="display: none;">
+            Error al cargar los eventos. Por favor, intenta nuevamente.
+        </div>
+    </div>
+
+    <!-- Script para cargar el calendario -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+
+    const calendar = document.getElementById("calendar");
+    const currentMonthElement = document.getElementById("current-month");
+
+    // Función para generar el calendario
+    function generateCalendar(year, month) {
+        calendar.innerHTML = ""; // Limpiar el calendario anterior
+
+        // Crear un objeto Date para el primer día del mes
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+
+        // Días de la semana
+        const daysOfWeek = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+        daysOfWeek.forEach(day => {
+            const dayElement = document.createElement("div");
+            dayElement.textContent = day;
+            dayElement.style.fontWeight = "bold";
+            calendar.appendChild(dayElement);
+        });
+
+        // Espacios en blanco para los días antes del primer día del mes
+        for (let i = 0; i < firstDay.getDay(); i++) {
+            const emptyDay = document.createElement("div");
+            calendar.appendChild(emptyDay);
+        }
+
+        // Días del mes
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dayElement = document.createElement("div");
+            dayElement.textContent = day;
+            dayElement.classList.add("day");
+
+            // Marcar el día actual
+            const today = new Date();
+            if (
+                year === today.getFullYear() &&
+                month === today.getMonth() &&
+                day === today.getDate()
+            ) {
+                dayElement.style.backgroundColor = "#FF4136"; // Rojo para el día actual
+                dayElement.style.color = "white";
+            }
+
+            // Hacer el día clickeable
+            dayElement.style.cursor = "pointer";
+            dayElement.addEventListener("click", () => {
+                window.location.href = `/dia/${year}/${month + 1}/${day}`;
+            });
+
+            calendar.appendChild(dayElement);
+        }
+
+        // Actualizar el título del mes
+        const monthNames = [
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ];
+        currentMonthElement.textContent = `${monthNames[month]} ${year}`;
+    }
+
+    // Cargar eventos desde el backend
+    async function loadEvents(year, month) {
+        try {
+            const response = await fetch("/api/eventos");
+            const events = await response.json();
+
+            // Marcar los días con eventos
+            const calendarDays = document.querySelectorAll(".day");
+            events.forEach(event => {
+                const eventDate = new Date(event.fecha); // Convertir la fecha a un objeto Date
+
+                // Ajustar la zona horaria si es necesario
+                eventDate.setMinutes(eventDate.getMinutes() + eventDate.getTimezoneOffset());
+
+                calendarDays.forEach(day => {
+                    const dayNumber = parseInt(day.textContent, 10);
+                    if (
+                        eventDate.getFullYear() === year &&
+                        eventDate.getMonth() === month &&
+                        eventDate.getDate() === dayNumber
+                    ) {
+                        day.classList.add("event");
+                        day.title = event.nombre; // Mostrar el nombre del evento al pasar el mouse
+                    }
+                });
+            });
+        } catch (error) {
+            console.error("Error al cargar los eventos:", error);
+        }
+    }
+
+    // Generar el calendario para el mes actual
+    generateCalendar(currentYear, currentMonth);
+    loadEvents(currentYear, currentMonth);
+
+    // Navegación entre meses
+    document.getElementById("prev-month").addEventListener("click", () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        generateCalendar(currentYear, currentMonth);
+        loadEvents(currentYear, currentMonth);
+    });
+
+    document.getElementById("next-month").addEventListener("click", () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        generateCalendar(currentYear, currentMonth);
+        loadEvents(currentYear, currentMonth);
+    });
+});
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

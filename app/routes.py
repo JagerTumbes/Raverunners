@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 from flask import Blueprint, jsonify, request, current_app, send_file
 from flask import render_template, redirect, url_for, flash, render_template_string
@@ -241,24 +241,29 @@ def crear_evento():
     if request.method == 'POST':
         nombre = request.form.get('nombre')
         lugar = request.form.get('lugar')
-        fecha = request.form.get('fecha')
+        fecha_str = request.form.get('fecha')  # Fecha en formato YYYY-MM-DD
         estado = request.form.get('estado', 'preparacion')
 
-        if not nombre or not lugar or not fecha:
+        if not nombre or not lugar or not fecha_str:
             flash("Todos los campos son obligatorios.", "danger")
             return render_template('crear_evento.html')
+
+        # Convertir la fecha a un objeto datetime con zona horaria
+        fecha_naive = datetime.strptime(fecha_str, '%Y-%m-%d')  # Fecha sin zona horaria
+        fecha_aware = fecha_naive.replace(tzinfo=timezone.utc)  # Agregar zona horaria UTC
 
         # Crear nuevo evento
         nuevo_evento = Evento(
             nombre=nombre,
             lugar=lugar,
-            fecha=datetime.strptime(fecha, '%Y-%m-%d').date(),
+            fecha=fecha_aware.date(),  # Guardar solo la fecha (sin hora)
             estado=estado,
             asistentes=[]
         )
 
         db.session.add(nuevo_evento)
         db.session.commit()
+
         flash("Evento creado exitosamente.", "success")
         return redirect(url_for('main.inicio_admin'))
 
@@ -579,3 +584,48 @@ def pagina_personalizada_dj(dj_id):
     except Exception as e:
         # Si el archivo no existe, mostrar un error 404
         return render_template('404.html'), 404
+    
+@main_bp.route('/api/eventos', methods=['GET'])
+@login_required
+def obtener_eventos():
+    # Obtener eventos futuros
+    eventos = Evento.query.filter(Evento.fecha >= datetime.now().date()).all()
+
+    # Formatear los eventos como JSON
+    eventos_json = [
+        {
+            "id": evento.id_evento,  # Cambiado de 'id' a 'id_evento'
+            "nombre": evento.nombre,
+            "lugar": evento.lugar,
+            "fecha": evento.fecha.strftime("%Y-%m-%d"),
+            "estado": evento.estado
+        }
+        for evento in eventos
+    ]
+
+    return jsonify(eventos_json)
+
+@main_bp.route('/calendario')
+@login_required  # Solo usuarios logueados pueden acceder
+def calendario():
+    # Verificar si el usuario tiene permisos para ver el calendario
+    if current_user.tipo_usuario not in ['admin', 'raver', 'funcionario', 'dj']:
+        flash('No tienes permisos para acceder a esta página.', 'danger')
+        return redirect(url_for('main.index'))  # Redirigir a la página principal
+
+    # Renderizar la página del calendario
+    return render_template('calendario.html')
+
+@main_bp.route('/dia/<int:year>/<int:month>/<int:day>')
+@login_required
+def ver_dia(year, month, day):
+    # Convertir los parámetros en un objeto Date
+    selected_date = datetime(year, month, day).date()
+
+    # Obtener los eventos para ese día
+    eventos_del_dia = Evento.query.filter(
+        Evento.fecha == selected_date
+    ).all()
+
+    # Renderizar la página con los eventos del día
+    return render_template('ver_dia.html', eventos=eventos_del_dia, fecha=selected_date)
