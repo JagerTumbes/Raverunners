@@ -58,33 +58,9 @@ class Raver(db.Model):
     __tablename__ = 'ravers'
 
     id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), primary_key=True, autoincrement=False)  # No usar autoincremento aquí
-    codigo_qr = db.Column(db.String(1000), nullable=False)  # Almacenar solo el nombre del archivo
 
     def __repr__(self):
         return f"<Raver ID {self.id}>"
-
-    def generate_qr(self):
-        if not self.id:
-            raise ValueError("El ID del Raver no está disponible. Guarda el Raver antes de generar el código QR.")
-
-        print(f"Generando código QR para Raver con ID {self.id}")  # Log
-
-        qr_data = f"raver:{self.id}"
-        qr_image = qrcode.make(qr_data)
-
-        qr_folder = os.path.join(current_app.config['UPLOAD_FOLDER'], 'qrs')
-        os.makedirs(qr_folder, exist_ok=True)
-
-        qr_filename = f"{self.id}_qr.png"
-        qr_path = os.path.join(qr_folder, qr_filename)
-
-        try:
-            qr_image.save(qr_path)
-            self.codigo_qr = qr_filename
-            print(f"Código QR generado y guardado: {qr_path}")  # Log
-        except Exception as e:
-            print(f"Error al guardar el código QR: {str(e)}")  # Log
-            raise RuntimeError(f"Error al guardar el QR: {e}")
 
 class Evento(db.Model):
     __tablename__ = 'eventos'

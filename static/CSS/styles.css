@@ -3,13 +3,13 @@
 /* Tipografía */
 body {
     font-family: 'Arial', sans-serif;
-    background-color: #d8d9e8;
+    background-color: #e0e7ff; /* Fondo suave azul claro */
     color: #333;
 }
 
 /* Estilo del encabezado */
 .navbar {
-    background-color: #007bff;
+    background-color: #005bb5; /* Azul más oscuro */
 }
 
 .navbar-brand, .navbar-nav .nav-link {
@@ -19,7 +19,7 @@ body {
 
 .navbar-nav .nav-link.active {
     background-color: white;
-    color: #007bff !important;
+    color: #005bb5 !important;
     border-radius: 5px;
     text-decoration: none;
 }
@@ -31,6 +31,7 @@ body {
 /* Mejoras visuales generales */
 h3 {
     margin-top: 20px;
+    color: #005bb5; /* Azul para encabezados */
 }
 
 /* Imagen de perfil */
@@ -41,6 +42,7 @@ h3 {
     object-fit: cover;
     margin-right: 10px;
     float: left;
+    border: 2px solid #005bb5; /* Borde azul */
 }
 
 /* Estilo de las tablas */
@@ -55,27 +57,27 @@ table {
 }
 
 th, td {
-    border: 1px solid #007bff;
+    border: 1px solid #005bb5; /* Borde azul */
     padding: 10px;
     text-align: left;
 }
 
 th {
-    background-color: #007bff;
+    background-color: #005bb5;
     color: white;
     font-weight: bold;
 }
 
 td {
-    background-color: #f9f9f9;
+    background-color: #f0f4fa; /* Fondo gris claro */
 }
 
 tr:nth-child(even) td {
-    background-color: #f2f2f2;
+    background-color: #e2e6f0; /* Alternar filas */
 }
 
 tr:hover td {
-    background-color: #ddd;
+    background-color: #cce0f7; /* Resaltar al pasar el ratón */
 }
 
 /* Ajustes específicos de columnas */
@@ -107,6 +109,14 @@ th:nth-child(4), td:nth-child(4) {
     width: 100%;
     margin-bottom: 10px;
     text-align: center;
+    background-color: #6a0dad; /* Morado */
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+.btn-container .btn-custom:hover {
+    background-color: #5a008f; /* Morado más oscuro al pasar el ratón */
 }
 
 /* Estilo de los reportes */
@@ -126,15 +136,15 @@ th:nth-child(4), td:nth-child(4) {
 
 /* Colores de fondo según el estado del reporte */
 .pendiente {
-    background-color: #f50014 !important;
+    background-color: #f57f7f !important; /* Rojo suave */
 }
 
 .En-progreso {
-    background-color: #d6ac23 !important;
+    background-color: #d6ac23 !important; /* Amarillo */
 }
 
 .Resuelto {
-    background-color: #1be74b !important;
+    background-color: #87c4a1 !important; /* Verde suave */
 }
 
 /* Ajustes adicionales para el contenido del reporte */
@@ -158,12 +168,12 @@ th:nth-child(4), td:nth-child(4) {
 }
 
 .card-body a {
-    color: #007bff;
+    color: #005bb5;
     text-decoration: none;
 }
 
 .card-body a:hover {
-    color: #0056b3;
+    color: #004494;
     text-decoration: underline;
 }
 
@@ -201,7 +211,7 @@ th:nth-child(4), td:nth-child(4) {
     border: 1px solid #ddd;
     padding: 5px;
     border-radius: 5px;
-    background-color: #e76e6e;
+    background-color: #e76e6e; /* Rojo suave */
 }
 
 /* Estilo para el contenedor de tickets de la derecha */
@@ -212,7 +222,7 @@ th:nth-child(4), td:nth-child(4) {
     border: 1px solid #ddd;
     padding: 5px;
     border-radius: 5px;
-    background-color: #ebec7f;
+    background-color: #ebec7f; /* Amarillo suave */
 }
 
 .alert {
@@ -239,7 +249,7 @@ th:nth-child(4), td:nth-child(4) {
     left: 0;
     width: 250px;
     height: 100vh;
-    background-color: #2d7cca;  /* Color de fondo */
+    background-color: #2d7cca;  /* Azul para la barra lateral */
     color: white;  /* Texto blanco para visibilidad */
     padding-top: 20px;
     z-index: 9999;  /* Asegúrate de que la barra lateral esté sobre el contenido */
@@ -306,9 +316,6 @@ th:nth-child(4), td:nth-child(4) {
     box-shadow: none;  /* Eliminar cualquier sombra al hacer hover */
 }
 
-
-
-
 /* Estilo para el contenido principal */
 #content {
     margin-left: 250px;  /* Asegura que el contenido se desplace hacia la derecha */
@@ -328,7 +335,6 @@ th:nth-child(4), td:nth-child(4) {
     background: rgba(0, 0, 0, 0.5); /* Oscurece el fondo */
     z-index: 10;
 }
-
 
 .overlay.visible {
     display: block; /* Se muestra solo cuando tiene la clase visible */
@@ -377,7 +383,6 @@ th:nth-child(4), td:nth-child(4) {
     margin-top: 10px;
 }
 
-
 #popup-filtro.visible {
     display: block; /* Se muestra solo cuando tiene la clase visible */
 }
@@ -390,28 +395,33 @@ th:nth-child(4), td:nth-child(4) {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     padding: 20px;
     margin-bottom: 30px;
-    max-width: 100%
-
+    max-width: 100%;
 }
+
 .dashboard-container h3 {
     margin-bottom: 20px;
     font-size: 18px;
+    color: #005bb5; /* Azul para los títulos */
 }
+
 /* Opcional: Agregar márgenes entre los gráficos */
 .row.mt-4 {
     margin-top: 30px;
 }
+
 #ticketsChart {
     width: 100%;
     margin: auto; /* Centra los gráficos */
     display: block; /* Asegura que los gráficos no se comporten como elementos inline */
 }
+
 /* Ajustes específicos para el gráfico de pie */
 #ticketsChart {
-    max-width: 50%;  /* Limita el tamaño del gráfico de pie al 80% del contenedor */
+    max-width: 50%;  /* Limita el tamaño del gráfico de pie al 50% del contenedor */
     height: 250px;   /* Ajusta la altura del gráfico de pie */
     margin-top: 20px;
 }
+
 #empresaChart {
     max-width: 100%;
     height: 300px; /* Puedes ajustar esta altura según lo necesites */
@@ -431,6 +441,7 @@ th:nth-child(4), td:nth-child(4) {
     border-radius: 8px;
     overflow: hidden;
     background-color: transparent; /* Asegura que el fondo sea transparente */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra suave */
 }
 
 .card img {
@@ -444,6 +455,7 @@ th:nth-child(4), td:nth-child(4) {
     text-align: center;
     padding: 15px;
     background-color: #fff; /* Mantén el fondo blanco solo para el cuerpo de la tarjeta */
+    border-top: 2px solid #005bb5; /* Borde azul en la parte superior */
 }
 
 .card-title {
@@ -455,4 +467,3 @@ th:nth-child(4), td:nth-child(4) {
 .card-text {
     color: #666;
 }
-

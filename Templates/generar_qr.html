@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generar Código QR</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container mt-5">
+        <h1>Generar Código QR</h1>
+        
+        <!-- Botón para generar el QR -->
+        <button id="generar-qr-btn" class="btn btn-primary">Generar Código QR</button>
+
+        <!-- Espacio para mostrar el QR -->
+        <div id="qr-container" class="mt-4 text-center" style="display: none;">
+            <h4>Tu Código QR:</h4>
+            <img id="qr-image" src="" alt="Código QR" style="max-width: 300px;">
+        </div>
+
+        <!-- Mensaje de error en caso de fallo -->
+        <div id="error-message" class="mt-4 text-danger" style="display: none;">
+            <p>Ocurrió un error al generar el código QR. Por favor, inténtalo de nuevo.</p>
+        </div>
+    </div>
+
+    <!-- Script para manejar la generación del QR -->
+    <script>
+        document.getElementById('generar-qr-btn').addEventListener('click', function() {
+            const raverId = {{ raver_id }};
+            const qrContainer = document.getElementById('qr-container');
+            const qrImage = document.getElementById('qr-image');
+            const errorMessage = document.getElementById('error-message');
+
+            // Ocultar el contenedor del QR y el mensaje de error al iniciar
+            qrContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            fetch(`/generar_qr/${raverId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Error ${response.status}: ${response.statusText}`);
+                    }
+                    return response.blob();
+                })
+                .then(blob => {
+                    // Mostrar la imagen generada
+                    qrImage.src = URL.createObjectURL(blob);
+                    qrContainer.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error al generar el QR:', error);
+                    errorMessage.style.display = 'block'; // Mostrar mensaje de error
+                });
+        });
+    </script>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

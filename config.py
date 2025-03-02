@@ -5,7 +5,7 @@ class Config:
     SECRET_KEY = 'tesisusm123'
     UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)),'static', 'images')
     STATIC_FOLDER = 'static'
-
+    DEBUG = True
     MAIL_SERVER = 'smtp.gmail.com'
     MAIL_PORT = 587
     MAIL_USE_TLS = True

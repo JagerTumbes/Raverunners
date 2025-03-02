@@ -1,6 +1,6 @@
 from datetime import datetime
 import os
-from flask import Blueprint, jsonify, request, current_app
+from flask import Blueprint, jsonify, request, current_app, send_file
 from flask import render_template, redirect, url_for, flash, render_template_string
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -9,10 +9,10 @@ from .models import Evento, Funcionario, Raver, Usuario, DJ
 from .forms import CambiarEstadoForm, CrearFuncionarioForm, LoginForm, RegisterRaverForm
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
-
+import qrcode
 from . import db
 from pyzbar.pyzbar import decode
-
+import logging
 import io
 import re
 
@@ -29,7 +29,9 @@ from app.models import Usuario
 from app.forms import LoginForm
 from app.routes import main_bp
 
-
+# Configurar el logger
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 def validate_rut(form, field):
     if not field.data.isdigit() or len(field.data) != 9:
@@ -175,10 +177,7 @@ def register_raver():
             nuevo_raver = Raver(id=nuevo_usuario.id)
             db.session.add(nuevo_raver)
 
-            # Generar el código QR para el raver
-            nuevo_raver.generate_qr()
-
-            # Commit para guardar tanto el raver como el QR
+            # Commit para guardar tanto el raver como el usuario
             db.session.commit()
 
             flash('Raver registrado exitosamente. Pendiente de activación por el administrador.', 'success')
@@ -186,8 +185,8 @@ def register_raver():
 
         except Exception as e:
             db.session.rollback()  # Deshacer los cambios si hay un error
-            print(f"Error al registrar el usuario o generar el QR: {str(e)}")  # Registrar el error completo
-            flash(f'Error al registrar el usuario o generar el QR: {str(e)}', 'danger')
+            print(f"Error al registrar el usuario: {str(e)}")  # Registrar el error completo
+            flash(f'Error al registrar el usuario: {str(e)}', 'danger')
             return redirect(url_for('main.register_raver'))
 
     else:
@@ -309,6 +308,56 @@ def cambiar_estado_evento(evento_id):
 
     # Pasar evento y siguiente_estado a la plantilla
     return render_template('detalle_evento.html', evento=evento, form=form, siguiente_estado=siguiente_estado)
+
+from flask import send_file
+from io import BytesIO
+import qrcode
+
+@main_bp.route('/generar_qr/<int:raver_id>')
+@login_required
+def generar_qr(raver_id):
+    try:
+        # Verificar si el usuario autenticado es el Raver correspondiente o un admin
+        if current_user.tipo_usuario == 'raver' and current_user.id != raver_id:
+            return jsonify({"error": "No tienes permisos para acceder a este código QR."}), 403
+
+        if current_user.tipo_usuario not in ['raver', 'admin']:
+            return jsonify({"error": "No tienes permisos para acceder a esta función."}), 403
+
+        # Buscar al Raver por su ID
+        raver = Raver.query.get_or_404(raver_id)
+
+        # Generar el contenido del QR
+        qr_data = f"raver:{raver.id}"
+
+        # Crear el objeto QRCode
+        qr_image = qrcode.make(qr_data)
+
+        # Guardar el QR en un buffer en memoria
+        buffer = BytesIO()
+        qr_image.save(buffer, format="PNG")
+        buffer.seek(0)
+
+        # Enviar el QR como respuesta
+        return send_file(buffer, mimetype="image/png", as_attachment=False)
+
+    except Exception as e:
+        return jsonify({"error": f"Error al generar el QR: {str(e)}"}), 500
+
+@main_bp.route('/generar_qr_pagina/<int:raver_id>')
+@login_required
+def generar_qr_pagina(raver_id):
+    # Verificar si el usuario autenticado es el Raver correspondiente o un admin
+    if current_user.tipo_usuario == 'raver' and current_user.id != raver_id:
+        flash("No tienes permisos para acceder a este código QR.", "danger")
+        return redirect(url_for('main.index'))
+
+    if current_user.tipo_usuario not in ['raver', 'admin']:
+        flash("No tienes permisos para acceder a esta función.", "danger")
+        return redirect(url_for('main.index'))
+
+    # Renderizar la página con el botón para generar el QR
+    return render_template('generar_qr.html', raver_id=raver_id)
 
 @main_bp.route('/escanear_qr', methods=['GET', 'POST'])
 @login_required
