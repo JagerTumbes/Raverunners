@@ -1,7 +1,23 @@
 <!-- header.html -->
 <header class="header">
     <div class="container d-flex justify-content-between align-items-center">
-        <h1 class="m-0">RaveRunners</h1>
+        <!-- Enlace dinámico según el tipo de usuario -->
+        {% if current_user.is_authenticated %}
+            {% if current_user.tipo_usuario == 'admin' %}
+                <a href="{{ url_for('main.inicio_admin') }}" class="navbar-brand-link">RaveRunners</a>
+            {% elif current_user.tipo_usuario == 'raver' %}
+                <a href="{{ url_for('main.inicio_raver') }}" class="navbar-brand-link">RaveRunners</a>
+            {% elif current_user.tipo_usuario == 'funcionario' %}
+                <a href="{{ url_for('main.inicio_funcionario') }}" class="navbar-brand-link">RaveRunners</a>
+            {% elif current_user.tipo_usuario == 'dj' %}
+                <a href="{{ url_for('main.inicio_dj') }}" class="navbar-brand-link">RaveRunners</a>
+            {% else %}
+                <a href="{{ url_for('main.index') }}" class="navbar-brand-link">RaveRunners</a>
+            {% endif %}
+        {% else %}
+            <a href="{{ url_for('main.index') }}" class="navbar-brand-link">RaveRunners</a>
+        {% endif %}
+
         <div class="dropdown">
             <button class="btn btn-link text-dark" type="button" id="menuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -22,5 +38,17 @@
         .dropdown-menu {
             margin-top: 0;
         }
+
+        /* Estilo del enlace RaveRunners */
+        .navbar-brand-link {
+            font-family: 'Arial', sans-serif; /* Misma fuente que antes */
+            font-size: 35px; /* Tamaño grande para destacar */
+            font-weight: bold; /* Negrita para resaltar */
+            color: #6b08c9 !important; /* Color azul principal */
+            text-decoration: none; /* Sin subrayado */
+            transition: color 0.3s ease; /* Efecto suave al pasar el mouse */
+        }
+
+        
     </style>
 </header>
