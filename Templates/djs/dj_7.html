@@ -1,23 +1,228 @@
-
+<!-- templates/djs/dj_1.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página de pote</title>
+    <title>Página de {{ dj.nombre_dj }}</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        #calendario {
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .calendar div {
+            padding: 10px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .calendar .day {
+            background-color: #f9f9f9;
+        }
+        .calendar .event {
+            background-color: #6A0DAD; /* Morado para eventos */
+            color: white;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     {% include 'header.html' %}
-    <h1>Bienvenido a la página de pote</h1>
-    <p>Esta es la página personalizada de pote.</p>
-    
-        <img src="/static/images/dj/Captura_de_pantalla_2025-03-01_014638.png" alt="pote" style="max-width: 300px;">
-    
-    <!-- Puedes agregar más contenido aquí -->
+    <div class="container mt-5">
+        <h1>Bienvenido a la página de {{ dj.nombre_dj }}</h1>
+        <p>Esta es la página personalizada de {{ dj.nombre_dj }}.</p>
+
+        {% if dj.foto %}
+            <img src="{{ url_for('static', filename='images/dj/' + dj.foto) }}" alt="{{ dj.nombre_dj }}" style="max-width: 300px;">
+        {% else %}
+            <img src="{{ url_for('static', filename='images/default.jpg') }}" alt="Imagen por defecto" style="max-width: 300px;">
+        {% endif %}
+
+        <!-- Controles del calendario -->
+        <div class="calendar-controls">
+            <button id="prev-month">Mes Anterior</button>
+            <h3 id="current-month"></h3>
+            <button id="next-month">Mes Siguiente</button>
+        </div>
+
+        <!-- Contenedor del calendario -->
+        <div id="calendario" class="calendar mt-5"></div>
+
+        <!-- Mensaje de error -->
+        <div id="error-message" class="error-message" style="display: none;">
+            Error al cargar los eventos. Por favor, intenta nuevamente.
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+
+    const calendar = document.getElementById("calendario");
+    const currentMonthElement = document.getElementById("current-month");
+
+    // Función para generar el calendario
+    function generateCalendar(year, month) {
+        calendar.innerHTML = ""; // Limpiar el calendario anterior
+
+        // Crear un objeto Date para el primer día del mes
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+
+        // Días de la semana
+        const daysOfWeek = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+        daysOfWeek.forEach(day => {
+            const dayElement = document.createElement("div");
+            dayElement.textContent = day;
+            dayElement.style.fontWeight = "bold";
+            calendar.appendChild(dayElement);
+        });
+
+        // Espacios en blanco para los días antes del primer día del mes
+        for (let i = 0; i < firstDay.getDay(); i++) {
+            const emptyDay = document.createElement("div");
+            calendar.appendChild(emptyDay);
+        }
+
+        // Días del mes
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dayElement = document.createElement("div");
+            dayElement.textContent = day;
+            dayElement.classList.add("day");
+
+            // Marcar el día actual
+            const today = new Date();
+            if (
+                year === today.getFullYear() &&
+                month === today.getMonth() &&
+                day === today.getDate()
+            ) {
+                dayElement.style.backgroundColor = "#FF4136"; // Rojo para el día actual
+                dayElement.style.color = "white";
+            }
+
+            // Hacer el día clickeable
+            dayElement.style.cursor = "pointer";
+            dayElement.addEventListener("click", () => {
+                window.location.href = `/dia/${year}/${month + 1}/${day}`;
+            });
+
+            calendar.appendChild(dayElement);
+        }
+
+        // Actualizar el título del mes
+        const monthNames = [
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ];
+        currentMonthElement.textContent = `${monthNames[month]} ${year}`;
+    }
+
+    // Cargar eventos desde el backend
+    async function loadEvents(year, month) {
+        try {
+            const response = await fetch(`/dj/eventos_asociados/{{ dj.id }}`);
+            const events = await response.json();
+
+            // Organizar eventos por fecha
+            const eventsByDate = {};
+            events.forEach(event => {
+                const eventDate = new Date(event.start);
+
+                // Ajustar la zona horaria si es necesario
+                eventDate.setMinutes(eventDate.getMinutes() + eventDate.getTimezoneOffset());
+
+                const key = `${eventDate.getFullYear()}-${eventDate.getMonth() + 1}-${eventDate.getDate()}`;
+                if (!eventsByDate[key]) {
+                    eventsByDate[key] = [];
+                }
+                eventsByDate[key].push(event.title);
+            });
+
+            // Asignar colores a los días
+            const calendarDays = document.querySelectorAll(".day");
+            calendarDays.forEach(day => {
+                const dayNumber = parseInt(day.textContent, 10);
+                const key = `${year}-${month + 1}-${dayNumber}`;
+
+                if (eventsByDate[key]) {
+                    const tipos = eventsByDate[key];
+                    if (tipos.length > 1) {
+                        // Si hay más de un tipo de evento, usar color dorado
+                        day.style.backgroundColor = "#FFD700";
+                        day.title = "Múltiples tipos de eventos";
+                    } else {
+                        // Asignar color según el tipo de evento
+                        const tipo = tipos[0];
+                        let color = "";
+                        switch (tipo) {
+                            case "rave":
+                                color = "#0074D9"; // Azul
+                                break;
+                            case "after":
+                                color = "#2ECC40"; // Verde
+                                break;
+                            case "limpieza":
+                                color = "#FF4136"; // Rojo
+                                break;
+                            case "eventos_locales":
+                                color = "#6A0DAD"; // Morado
+                                break;
+                            case "exploraciones_urbanas":
+                                color = "#FF851B"; // Naranja
+                                break;
+                            default:
+                                color = "#FFFFFF"; // Blanco por defecto
+                        }
+                        day.style.backgroundColor = color;
+                        day.title = `Evento: ${tipo}`;
+                    }
+                }
+            });
+        } catch (error) {
+            console.error("Error al cargar los eventos:", error);
+        }
+    }
+
+    // Generar el calendario para el mes actual
+    generateCalendar(currentYear, currentMonth);
+    loadEvents(currentYear, currentMonth);
+
+    // Navegación entre meses
+    document.getElementById("prev-month").addEventListener("click", () => {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        generateCalendar(currentYear, currentMonth);
+        loadEvents(currentYear, currentMonth);
+    });
+
+    document.getElementById("next-month").addEventListener("click", () => {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        generateCalendar(currentYear, currentMonth);
+        loadEvents(currentYear, currentMonth);
+    });
+});
+
+    </script>
 </body>
 </html>
