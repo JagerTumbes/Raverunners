@@ -18,6 +18,33 @@
             <a href="{{ url_for('main.index') }}" class="navbar-brand-link">RaveRunners</a>
         {% endif %}
 
+        <!-- Botones de navegación -->
+        <div class="d-flex align-items-center">
+            <!-- Botones específicos para Admin -->
+            {% if current_user.is_authenticated and current_user.tipo_usuario == 'admin' %}
+                <a href="{{ url_for('main.ver_eventos') }}" class="btn btn-outline-primary mr-2">Ver Eventos</a>
+                <a href="{{ url_for('main.admin_usuarios') }}" class="btn btn-outline-primary mr-2">Administrar Usuarios</a>
+                <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
+            {% endif %}
+
+            <!-- Botones específicos para Funcionario -->
+            {% if current_user.is_authenticated and current_user.tipo_usuario == 'funcionario' %}
+                <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
+            {% endif %}
+
+            <!-- Botones específicos para DJ -->
+            {% if current_user.is_authenticated and current_user.tipo_usuario == 'dj' %}
+                <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
+            {% endif %}
+
+            <!-- Botones específicos para Raver -->
+            {% if current_user.is_authenticated and current_user.tipo_usuario == 'raver' %}
+            <a href="{{ url_for('main.generar_qr_pagina', raver_id=current_user.id) }}" class="btn btn-outline-primary mr-2">Generar QR</a>
+                <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
+            {% endif %}
+        </div>
+
+        <!-- Menú desplegable (cerrar sesión) -->
         <div class="dropdown">
             <button class="btn btn-link text-dark" type="button" id="menuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                 <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -49,6 +76,14 @@
             transition: color 0.3s ease; /* Efecto suave al pasar el mouse */
         }
 
-        
+        /* Estilo de los botones */
+        .btn-outline-primary {
+            border-color: #6b08c9;
+            color: #6b08c9;
+        }
+        .btn-outline-primary:hover {
+            background-color: #6b08c9;
+            color: white;
+        }
     </style>
 </header>

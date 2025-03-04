@@ -11,7 +11,6 @@
     <div class="container mt-5">
         <h2>Crear Evento</h2>
 
-
         <form method="POST" action="{{ url_for('main.crear_evento') }}">
             <div class="mb-3">
                 <label for="nombre" class="form-label">Nombre del Evento</label>
@@ -26,13 +25,16 @@
                 <input type="date" class="form-control" id="fecha" name="fecha" required>
             </div>
             <div class="mb-3">
-                <label for="estado" class="form-label">Estado del Evento</label>
-                <select class="form-select" id="estado" name="estado">
-                    <option value="preparacion" selected>Preparación</option>
-                    <option value="ocurriendo">Ocurriendo</option>
-                    <option value="finalizado">Finalizado</option>
+                <label for="tipo" class="form-label">Tipo de Evento</label>
+                <select class="form-select" id="tipo" name="tipo" required>
+                    <option value="rave">Rave</option>
+                    <option value="after">After</option>
+                    <option value="limpieza">Limpieza</option>
+                    <option value="eventos_locales">Eventos en Locales</option>
+                    <option value="exploraciones_urbanas">Exploraciones Urbanas</option>
                 </select>
             </div>
+            
             <button type="submit" class="btn btn-primary">Crear Evento</button>
             <a href="{{ url_for('main.inicio_admin') }}" class="btn btn-secondary">Volver</a>
         </form>

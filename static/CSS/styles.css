@@ -45,7 +45,7 @@ h3 {
     border: 2px solid #005bb5; /* Borde azul */
 }
 
-/* Estilo de las tablas */
+/*
 table {
     width: 100%;
     border-collapse: collapse;
@@ -57,28 +57,46 @@ table {
 }
 
 th, td {
-    border: 1px solid #005bb5; /* Borde azul */
+    border: 1px solid #007bff;
     padding: 10px;
     text-align: left;
 }
 
 th {
-    background-color: #005bb5;
+    background-color: #007bff;
     color: white;
     font-weight: bold;
 }
 
 td {
-    background-color: #f0f4fa; /* Fondo gris claro */
+    background-color: #f9f9f9;
 }
 
 tr:nth-child(even) td {
-    background-color: #e2e6f0; /* Alternar filas */
+    background-color: #f2f2f2;
 }
 
 tr:hover td {
-    background-color: #cce0f7; /* Resaltar al pasar el ratón */
+    background-color: #ddd;
 }
+*/
+/* Aplicar estilos solo a tablas fuera de FullCalendar */
+body:not(.fc) table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+body:not(.fc) th, body:not(.fc) td {
+    border: 1px solid #007bff;
+    padding: 10px;
+    text-align: left;
+}
+
 
 /* Ajustes específicos de columnas */
 th:nth-child(1), td:nth-child(1) {
@@ -521,4 +539,34 @@ th:nth-child(4), td:nth-child(4) {
     font-weight: bold;
     text-align: center;
     margin-top: 20px;
+}
+
+/* Estilo específico para el contenedor del calendario */
+#calendario {
+    width: 100%;
+    max-width: 1200px; /* Asegura que el calendario no sea demasiado ancho */
+    margin: 0 auto;
+    overflow: hidden; /* Asegura que el contenido no se desborde */
+}
+
+/* Asegurar que el calendario ocupe el ancho completo del contenedor */
+.fc {
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Ajustar el tamaño de las celdas del calendario */
+.fc-daygrid-day {
+    min-width: 120px; /* Ajusta el ancho mínimo de las celdas del calendario */
+    padding: 5px;
+}
+
+/* Ajustar el tamaño de la fuente en el calendario */
+.fc-daygrid-day-frame {
+    font-size: 14px; /* Ajusta el tamaño de la fuente según sea necesario */
+}
+
+/* Asegurar que las filas del calendario tengan suficiente espacio */
+.fc-daygrid-day-top {
+    height: auto !important; /* Permitir que la altura se ajuste automáticamente */
 }

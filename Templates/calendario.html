@@ -12,7 +12,15 @@
     {% include 'header.html' %}
     <div class="container mt-5">
         <h1>Calendario de Eventos</h1>
-
+        <label for="filtro-tipo" class="form-label">Filtrar por Tipo de Evento:</label>
+        <select class="form-select" id="filtro-tipo">
+            <option value="todos">Todos</option>
+            <option value="rave">Rave</option>
+            <option value="after">After</option>
+            <option value="limpieza">Limpieza</option>
+            <option value="eventos_locales">Eventos en Locales</option>
+            <option value="exploraciones_urbanas">Exploraciones Urbanas</option>
+        </select>
         <!-- Controles del calendario -->
         <div class="calendar-controls">
             <button id="prev-month">Mes Anterior</button>
@@ -37,6 +45,7 @@
 
     const calendar = document.getElementById("calendar");
     const currentMonthElement = document.getElementById("current-month");
+    const filtroTipo = document.getElementById("filtro-tipo");
 
     // Función para generar el calendario
     function generateCalendar(year, month) {
@@ -101,30 +110,160 @@
             const response = await fetch("/api/eventos");
             const events = await response.json();
 
-            // Marcar los días con eventos
-            const calendarDays = document.querySelectorAll(".day");
+            // Organizar eventos por fecha
+            const eventsByDate = {};
             events.forEach(event => {
-                const eventDate = new Date(event.fecha); // Convertir la fecha a un objeto Date
+                const eventDate = new Date(event.fecha);
 
                 // Ajustar la zona horaria si es necesario
                 eventDate.setMinutes(eventDate.getMinutes() + eventDate.getTimezoneOffset());
 
-                calendarDays.forEach(day => {
-                    const dayNumber = parseInt(day.textContent, 10);
-                    if (
-                        eventDate.getFullYear() === year &&
-                        eventDate.getMonth() === month &&
-                        eventDate.getDate() === dayNumber
-                    ) {
-                        day.classList.add("event");
-                        day.title = event.nombre; // Mostrar el nombre del evento al pasar el mouse
+                const key = `${eventDate.getFullYear()}-${eventDate.getMonth() + 1}-${eventDate.getDate()}`;
+                if (!eventsByDate[key]) {
+                    eventsByDate[key] = [];
+                }
+                eventsByDate[key].push(event.tipo);
+            });
+
+            // Asignar colores a los días
+            const calendarDays = document.querySelectorAll(".day");
+            calendarDays.forEach(day => {
+                const dayNumber = parseInt(day.textContent, 10);
+                const key = `${year}-${month + 1}-${dayNumber}`;
+
+                if (eventsByDate[key]) {
+                    const tipos = eventsByDate[key];
+                    if (tipos.length > 1) {
+                        // Si hay más de un tipo de evento, usar color dorado
+                        day.style.backgroundColor = "#FFD700";
+                        day.title = "Múltiples tipos de eventos";
+                    } else {
+                        // Asignar color según el tipo de evento
+                        const tipo = tipos[0];
+                        let color = "";
+                        switch (tipo) {
+                            case "rave":
+                                color = "#0074D9"; // Azul
+                                break;
+                            case "after":
+                                color = "#2ECC40"; // Verde
+                                break;
+                            case "limpieza":
+                                color = "#FF4136"; // Rojo
+                                break;
+                            case "eventos_locales":
+                                color = "#6A0DAD"; // Morado
+                                break;
+                            case "exploraciones_urbanas":
+                                color = "#FF851B"; // Naranja
+                                break;
+                            default:
+                                color = "#FFFFFF"; // Blanco por defecto
+                        }
+                        day.style.backgroundColor = color;
+                        day.title = `Evento: ${tipo}`;
                     }
-                });
+                }
             });
         } catch (error) {
             console.error("Error al cargar los eventos:", error);
         }
     }
+
+    // Filtrar eventos según el tipo seleccionado
+    function filterEventsByType(eventsByDate, tipoFiltro) {
+        const filteredEvents = {};
+
+        if (tipoFiltro === "todos") {
+            return eventsByDate; // Mostrar todos los eventos
+        }
+
+        for (const [key, tipos] of Object.entries(eventsByDate)) {
+            if (tipos.includes(tipoFiltro)) {
+                filteredEvents[key] = [tipoFiltro]; // Solo incluir el tipo filtrado
+            }
+        }
+
+        return filteredEvents;
+    }
+
+    // Aplicar el filtro
+    filtroTipo.addEventListener("change", async () => {
+        const tipoFiltro = filtroTipo.value;
+
+        // Obtener eventos desde el backend
+        const response = await fetch("/api/eventos");
+        const events = await response.json();
+
+        // Organizar eventos por fecha
+        const eventsByDate = {};
+        events.forEach(event => {
+            const eventDate = new Date(event.fecha);
+
+            // Ajustar la zona horaria si es necesario
+            eventDate.setMinutes(eventDate.getMinutes() + eventDate.getTimezoneOffset());
+
+            const key = `${eventDate.getFullYear()}-${eventDate.getMonth() + 1}-${eventDate.getDate()}`;
+            if (!eventsByDate[key]) {
+                eventsByDate[key] = [];
+            }
+            eventsByDate[key].push(event.tipo);
+        });
+
+        // Filtrar eventos según el tipo seleccionado
+        const filteredEvents = filterEventsByType(eventsByDate, tipoFiltro);
+
+        // Limpiar el calendario
+        calendar.innerHTML = "";
+
+        // Regenerar el calendario con los eventos filtrados
+        generateCalendar(currentYear, currentMonth);
+
+        // Asignar colores a los días filtrados
+        const calendarDays = document.querySelectorAll(".day");
+        calendarDays.forEach(day => {
+            const dayNumber = parseInt(day.textContent, 10);
+            const key = `${currentYear}-${currentMonth + 1}-${dayNumber}`;
+
+            if (filteredEvents[key]) {
+                const tipos = filteredEvents[key];
+                if (tipos.length > 1) {
+                    // Si hay múltiples tipos de eventos, usar color dorado
+                    day.style.backgroundColor = "#FFD700";
+                    day.title = "Múltiples tipos de eventos";
+                } else {
+                    // Asignar color según el tipo de evento
+                    const tipo = tipos[0];
+                    let color = "";
+                    switch (tipo) {
+                        case "rave":
+                            color = "#0074D9"; // Azul
+                            break;
+                        case "after":
+                            color = "#2ECC40"; // Verde
+                            break;
+                        case "limpieza":
+                            color = "#FF4136"; // Rojo
+                            break;
+                        case "eventos_locales":
+                            color = "#6A0DAD"; // Morado
+                            break;
+                        case "exploraciones_urbanas":
+                            color = "#FF851B"; // Naranja
+                            break;
+                        default:
+                            color = "#FFFFFF"; // Blanco por defecto
+                    }
+                    day.style.backgroundColor = color;
+                    day.title = `Evento: ${tipo}`;
+                }
+            } else {
+                // Si no hay eventos, limpiar el fondo
+                day.style.backgroundColor = "";
+                day.title = "";
+            }
+        });
+    });
 
     // Generar el calendario para el mes actual
     generateCalendar(currentYear, currentMonth);

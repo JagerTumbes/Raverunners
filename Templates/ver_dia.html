@@ -17,9 +17,12 @@
             {% if eventos %}
                 {% for evento in eventos %}
                     <li class="list-group-item">
-                        <strong>{{ evento.nombre }}</strong> - {{ evento.lugar }}
-                        <br>
-                        <small>Estado: {{ evento.estado }}</small>
+                        <!-- Enlace hacia los detalles del evento -->
+                        <a href="{{ url_for('main.detalle_evento', evento_id=evento.id_evento) }}" style="text-decoration: none; color: inherit;">
+                            <strong>{{ evento.nombre }}</strong> - {{ evento.lugar }}
+                            <br>
+                            <small>Estado: {{ evento.estado }}</small>
+                        </a>
                     </li>
                 {% endfor %}
             {% else %}

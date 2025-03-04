@@ -13,10 +13,18 @@
 
         <!-- Botones encima de la tabla -->
         <div class="mb-3">
-            <button class="btn btn-primary" data-toggle="modal" data-target="#confirmModal" 
-                    data-siguiente-estado="{{ siguiente_estado }}">
-                Cambiar Estado
-            </button>
+            {% if current_user.tipo_usuario == 'admin' %}
+                <!-- Solo el admin puede cambiar el estado -->
+                <button class="btn btn-primary" data-toggle="modal" data-target="#confirmModal" 
+                        data-siguiente-estado="{{ siguiente_estado }}">
+                    Cambiar Estado
+                </button>
+
+                <!-- Botón para añadir DJs al evento (solo visible para admin) -->
+                <a href="{{ url_for('main.asociar_djs_a_evento', evento_id=evento.id_evento) }}" class="btn btn-info ml-2">
+                    Añadir DJs
+                </a>
+            {% endif %}
 
             <a href="{{ url_for('main.ver_eventos') }}" class="btn btn-secondary ml-2">Volver</a>
         </div>
@@ -28,15 +36,34 @@
             <li class="list-group-item"><strong>Lugar:</strong> {{ evento.lugar }}</li>
             <li class="list-group-item"><strong>Fecha:</strong> {{ evento.fecha }}</li>
             <li class="list-group-item"><strong>Estado:</strong> {{ evento.estado }}</li>
-            <li class="list-group-item"><strong>Asistentes:</strong> 
-                {% if evento.asistentes %}
+
+            <!-- Mostrar asistentes solo a admin y funcionarios -->
+            {% if current_user.tipo_usuario in ['admin', 'funcionario'] %}
+                <li class="list-group-item">
+                    <strong>Asistentes:</strong> 
+                    {% if evento.asistentes %}
+                        <ul>
+                            {% for asistente in evento.asistentes %}
+                                <li>{{ asistente }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span>No hay asistentes registrados.</span>
+                    {% endif %}
+                </li>
+            {% endif %}
+
+            <!-- Mostrar DJs asociados -->
+            <li class="list-group-item">
+                <strong>DJs Asociados:</strong>
+                {% if evento.djs %}
                     <ul>
-                        {% for asistente in evento.asistentes %}
-                            <li>{{ asistente }}</li>
+                        {% for dj in evento.djs %}
+                            <li>{{ dj.nombre_dj }}</li>
                         {% endfor %}
                     </ul>
                 {% else %}
-                    <span>No hay asistentes registrados.</span>
+                    <span>No hay DJs asociados a este evento.</span>
                 {% endif %}
             </li>
         </ul>

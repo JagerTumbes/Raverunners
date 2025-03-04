@@ -62,6 +62,13 @@ class Raver(db.Model):
     def __repr__(self):
         return f"<Raver ID {self.id}>"
 
+# Tabla intermedia para la relación muchos a muchos entre Evento y DJ
+evento_dj = db.Table(
+    'evento_dj',
+    db.Column('id_evento', db.Integer, db.ForeignKey('eventos.id_evento'), primary_key=True),
+    db.Column('id_dj', db.Integer, db.ForeignKey('djs.id'), primary_key=True)
+)
+
 class Evento(db.Model):
     __tablename__ = 'eventos'
 
@@ -69,13 +76,18 @@ class Evento(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     lugar = db.Column(db.String(100), nullable=False)
     fecha = db.Column(db.Date, nullable=False)
+    tipo = db.Column(db.String(50), nullable=False)  # Nuevo campo para el tipo de evento
     asistentes = db.Column(db.JSON, nullable=True)  # Sin valor por defecto en la BD
     estado = db.Column(db.String(20), nullable=False, default='preparacion')
 
-    def __init__(self, nombre, lugar, fecha, estado='preparacion', asistentes=None):
+    # Relación muchos a muchos con DJs
+    djs = db.relationship('DJ', secondary=evento_dj, back_populates='eventos')
+
+    def __init__(self, nombre, lugar, fecha, tipo, estado='preparacion', asistentes=None):
         self.nombre = nombre
         self.lugar = lugar
         self.fecha = fecha
+        self.tipo = tipo  # Inicializar el tipo de evento
         self.estado = estado
         self.asistentes = asistentes if asistentes is not None else []
 
@@ -86,6 +98,9 @@ class DJ(db.Model):
     nombre_dj = db.Column(db.String(80), nullable=False)
     descripcion = db.Column(db.Text, nullable=True)
     foto = db.Column(db.String(255), nullable=True)
+
+    # Relación muchos a muchos con Eventos
+    eventos = db.relationship('Evento', secondary=evento_dj, back_populates='djs')
 
     def __repr__(self):
         return f"<DJ {self.nombre_dj}>"

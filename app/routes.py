@@ -231,41 +231,61 @@ def inicio_funcionario():
     # Si el usuario es funcionario, renderizamos la página de inicio para funcionarios
     return render_template('inicio_funcionario.html')  # Asegúrate de tener este template en tu carpeta de templates
 
+from datetime import datetime, timezone
+
 @main_bp.route('/crear_evento', methods=['GET', 'POST'])
 @login_required
 def crear_evento():
-    if current_user.tipo_usuario != 'admin':  # Solo admin puede acceder
+    # Verificar si el usuario es un administrador
+    if current_user.tipo_usuario != 'admin':
         flash("No tienes permisos para acceder a esta página.", "danger")
         return redirect(url_for('main.index'))
 
     if request.method == 'POST':
+        # Obtener los datos del formulario
         nombre = request.form.get('nombre')
         lugar = request.form.get('lugar')
         fecha_str = request.form.get('fecha')  # Fecha en formato YYYY-MM-DD
+        tipo = request.form.get('tipo')  # Tipo de evento
         estado = request.form.get('estado', 'preparacion')
 
-        if not nombre or not lugar or not fecha_str:
+        # Validar que todos los campos obligatorios estén presentes
+        if not nombre or not lugar or not fecha_str or not tipo:
             flash("Todos los campos son obligatorios.", "danger")
             return render_template('crear_evento.html')
 
-        # Convertir la fecha a un objeto datetime con zona horaria
-        fecha_naive = datetime.strptime(fecha_str, '%Y-%m-%d')  # Fecha sin zona horaria
-        fecha_aware = fecha_naive.replace(tzinfo=timezone.utc)  # Agregar zona horaria UTC
+        # Validar que el tipo de evento sea uno de los valores permitidos
+        tipos_permitidos = ['rave', 'after', 'limpieza', 'eventos_locales', 'exploraciones_urbanas']
+        if tipo not in tipos_permitidos:
+            flash("El tipo de evento seleccionado no es válido.", "danger")
+            return render_template('crear_evento.html')
 
-        # Crear nuevo evento
-        nuevo_evento = Evento(
-            nombre=nombre,
-            lugar=lugar,
-            fecha=fecha_aware.date(),  # Guardar solo la fecha (sin hora)
-            estado=estado,
-            asistentes=[]
-        )
+        try:
+            # Convertir la fecha a un objeto datetime con zona horaria
+            fecha_naive = datetime.strptime(fecha_str, '%Y-%m-%d')  # Fecha sin zona horaria
+            fecha_aware = fecha_naive.replace(tzinfo=timezone.utc)  # Agregar zona horaria UTC
 
-        db.session.add(nuevo_evento)
-        db.session.commit()
+            # Crear nuevo evento
+            nuevo_evento = Evento(
+                nombre=nombre,
+                lugar=lugar,
+                fecha=fecha_aware.date(),  # Guardar solo la fecha (sin hora)
+                tipo=tipo,  # Guardar el tipo de evento
+                estado=estado,
+                asistentes=[]
+            )
 
-        flash("Evento creado exitosamente.", "success")
-        return redirect(url_for('main.inicio_admin'))
+            # Agregar el evento a la base de datos
+            db.session.add(nuevo_evento)
+            db.session.commit()
+
+            flash("Evento creado exitosamente.", "success")
+            return redirect(url_for('main.inicio_admin'))
+
+        except Exception as e:
+            db.session.rollback()  # Deshacer los cambios en caso de error
+            flash(f"Error al crear el evento: {str(e)}", "danger")
+            return render_template('crear_evento.html')
 
     return render_template('crear_evento.html')
 
@@ -273,10 +293,6 @@ def crear_evento():
 @main_bp.route('/ver_eventos')
 @login_required
 def ver_eventos():
-    if current_user.tipo_usuario != 'admin':  # Solo admin puede ver eventos
-        flash("No tienes permisos para acceder a esta página.", "danger")
-        return redirect(url_for('main.index'))
-
     eventos = Evento.query.all()  # Obtener todos los eventos
     return render_template('ver_eventos.html', eventos=eventos)
 
@@ -575,15 +591,14 @@ def inicio_dj():
 
 @main_bp.route('/dj/<int:dj_id>')
 def pagina_personalizada_dj(dj_id):
-    # Construir la ruta al archivo HTML personalizado
-    dj_html_path = f'djs/dj_{dj_id}.html'
-
-    try:
-        # Renderizar el archivo HTML personalizado
-        return render_template(dj_html_path)
-    except Exception as e:
-        # Si el archivo no existe, mostrar un error 404
-        return render_template('404.html'), 404
+    # Obtener el DJ por su ID
+    dj = DJ.query.get_or_404(dj_id)
+    
+    # Construir el nombre del archivo HTML basado en el dj_id
+    template_name = f'djs/dj_{dj.id}.html'
+    
+    # Renderizar la plantilla específica del DJ
+    return render_template(template_name, dj=dj)
     
 @main_bp.route('/api/eventos', methods=['GET'])
 @login_required
@@ -594,11 +609,12 @@ def obtener_eventos():
     # Formatear los eventos como JSON
     eventos_json = [
         {
-            "id": evento.id_evento,  # Cambiado de 'id' a 'id_evento'
+            "id": evento.id_evento,
             "nombre": evento.nombre,
             "lugar": evento.lugar,
             "fecha": evento.fecha.strftime("%Y-%m-%d"),
-            "estado": evento.estado
+            "estado": evento.estado,
+            "tipo": evento.tipo  # Añadir el tipo de evento
         }
         for evento in eventos
     ]
@@ -629,3 +645,70 @@ def ver_dia(year, month, day):
 
     # Renderizar la página con los eventos del día
     return render_template('ver_dia.html', eventos=eventos_del_dia, fecha=selected_date)
+
+@main_bp.route('/evento/<int:evento_id>/asociar_djs', methods=['GET', 'POST'])
+@login_required
+def asociar_djs_a_evento(evento_id):
+    # Verificar si el usuario es un administrador
+    if current_user.tipo_usuario != 'admin':
+        flash("No tienes permisos para acceder a esta página.", "danger")
+        return redirect(url_for('main.index'))
+
+    evento = Evento.query.get_or_404(evento_id)
+    djs_disponibles = DJ.query.all()
+
+    if request.method == 'POST':
+        # Obtener los IDs de los DJs seleccionados
+        dj_ids = request.form.getlist('djs')
+
+        # Limpiar los DJs actuales del evento
+        evento.djs.clear()
+
+        # Asociar los nuevos DJs al evento
+        for dj_id in dj_ids:
+            dj = DJ.query.get(dj_id)
+            if dj:
+                evento.djs.append(dj)
+
+        db.session.commit()
+        flash(f"DJs asociados al evento '{evento.nombre}' exitosamente.", "success")
+        return redirect(url_for('main.ver_eventos'))  # Redirigir a la lista de eventos
+
+    return render_template('asociar_djs.html', evento=evento, djs_disponibles=djs_disponibles)
+
+@main_bp.route('/dj/eventos_asociados/<int:dj_id>', methods=['GET'])
+def eventos_asociados_dj(dj_id):
+    # Obtener el DJ por su ID
+    dj = DJ.query.get_or_404(dj_id)
+
+    # Obtener los eventos asociados al DJ
+    eventos = [
+        {
+            "id": evento.id_evento,
+            "title": evento.nombre,
+            "start": evento.fecha.strftime('%Y-%m-%d'),
+            "url": url_for('main.detalle_evento', evento_id=evento.id_evento, _external=True)
+        }
+        for evento in dj.eventos
+    ]
+
+    return jsonify(eventos)
+
+@main_bp.route('/api/eventos-dj/<int:dj_id>', methods=['GET'])
+def get_eventos_dj(dj_id):
+    # Obtener el DJ por su ID
+    dj = DJ.query.get_or_404(dj_id)
+    
+    # Construir la lista de eventos asociados al DJ
+    eventos_asociados = []
+    for evento in dj.eventos:
+        eventos_asociados.append({
+            'id': evento.id_evento,  # Usar id_evento en lugar de id
+            'title': evento.nombre,
+            'start': evento.fecha.strftime('%Y-%m-%d'),
+            'end': None,  # Si no hay fecha de finalización
+            'isAssociated': True  # Marcar como asociado
+        })
+    
+    # Devolver los eventos en formato JSON
+    return jsonify(eventos_asociados)
