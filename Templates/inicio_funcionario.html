@@ -15,10 +15,10 @@
         <div class="mt-4">
             <!-- Botón para escanear el QR -->
             <a href="{{ url_for('main.escanear_qr') }}" class="btn btn-primary">Escanear Código QR</a>
+            <a href="{{ url_for('main.lista_objetos') }}" class="btn btn-primary">Inventario</a>
+            <a href="{{ url_for('main.listar_djs') }}" class="btn btn-primary">Ver DJs</a>
         </div>
-        <div class="text-center mt-4">
-            <a href="{{ url_for('main.logout') }}" class="btn btn-danger">Cerrar sesión</a>
-        </div>
+        
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

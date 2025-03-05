@@ -502,10 +502,6 @@ def procesar_qr():
 @main_bp.route('/djs', methods=['GET'])
 @login_required
 def listar_djs():
-    if current_user.tipo_usuario != 'admin':
-        flash("No tienes permisos para acceder a esta página.", "danger")
-        return redirect(url_for('main.index'))
-
     djs = DJ.query.all()
     return render_template('djs.html', djs=djs)
 
