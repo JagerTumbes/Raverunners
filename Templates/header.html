@@ -1,5 +1,5 @@
 <!-- header.html -->
-<header class="header">
+<header class="header navbar navbar-expand-lg navbar-light">
     <div class="container d-flex justify-content-between align-items-center">
         <!-- Enlace dinámico según el tipo de usuario -->
         {% if current_user.is_authenticated %}
@@ -18,41 +18,48 @@
             <a href="{{ url_for('main.index') }}" class="navbar-brand-link">RaveRunners</a>
         {% endif %}
 
-        <!-- Botones de navegación -->
-        <div class="d-flex align-items-center">
-            <!-- Botones específicos para Admin -->
-            {% if current_user.is_authenticated and current_user.tipo_usuario == 'admin' %}
-                <a href="{{ url_for('main.ver_eventos') }}" class="btn btn-outline-primary mr-2">Ver Eventos</a>
-                <a href="{{ url_for('main.admin_usuarios') }}" class="btn btn-outline-primary mr-2">Administrar Usuarios</a>
-                <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
-            {% endif %}
+        <!-- Botón de hamburguesa para dispositivos móviles -->
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-            <!-- Botones específicos para Funcionario -->
-            {% if current_user.is_authenticated and current_user.tipo_usuario == 'funcionario' %}
-                <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
-            {% endif %}
+        <!-- Menú principal (colapsable en móviles) -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav ml-auto d-flex align-items-center">
+                <!-- Botones específicos para Admin -->
+                {% if current_user.is_authenticated and current_user.tipo_usuario == 'admin' %}
+                    <a href="{{ url_for('main.ver_eventos') }}" class="btn btn-outline-primary mr-2">Ver Eventos</a>
+                    <a href="{{ url_for('main.admin_usuarios') }}" class="btn btn-outline-primary mr-2">Administrar Usuarios</a>
+                    <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
+                {% endif %}
 
-            <!-- Botones específicos para DJ -->
-            {% if current_user.is_authenticated and current_user.tipo_usuario == 'dj' %}
-                <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
-            {% endif %}
+                <!-- Botones específicos para Funcionario -->
+                {% if current_user.is_authenticated and current_user.tipo_usuario == 'funcionario' %}
+                    <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
+                {% endif %}
 
-            <!-- Botones específicos para Raver -->
-            {% if current_user.is_authenticated and current_user.tipo_usuario == 'raver' %}
-            <a href="{{ url_for('main.generar_qr_pagina', raver_id=current_user.id) }}" class="btn btn-outline-primary mr-2">Generar QR</a>
-                <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
-            {% endif %}
-        </div>
+                <!-- Botones específicos para DJ -->
+                {% if current_user.is_authenticated and current_user.tipo_usuario == 'dj' %}
+                    <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
+                {% endif %}
 
-        <!-- Menú desplegable (cerrar sesión) -->
-        <div class="dropdown">
-            <button class="btn btn-link text-dark" type="button" id="menuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 7H26M4 14H26M4 21H26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </button>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="menuButton">
-                <a href="{{ url_for('main.logout') }}" class="dropdown-item">Cerrar sesión</a>
+                <!-- Botones específicos para Raver -->
+                {% if current_user.is_authenticated and current_user.tipo_usuario == 'raver' %}
+                    <a href="{{ url_for('main.generar_qr_pagina', raver_id=current_user.id) }}" class="btn btn-outline-primary mr-2">Generar QR</a>
+                    <a href="{{ url_for('main.calendario') }}" class="btn btn-outline-primary mr-2">Calendario</a>
+                {% endif %}
+
+                <!-- Menú desplegable (cerrar sesión) -->
+                <div class="dropdown">
+                    <button class="btn btn-link text-dark" type="button" id="menuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M4 7H26M4 14H26M4 21H26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="menuButton">
+                        <a href="{{ url_for('main.logout') }}" class="dropdown-item">Cerrar sesión</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -84,6 +91,17 @@
         .btn-outline-primary:hover {
             background-color: #6b08c9;
             color: white;
+        }
+
+        /* Ajustes para dispositivos móviles */
+        @media (max-width: 991.98px) {
+            .navbar-nav {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .navbar-nav .btn {
+                margin: 5px 0;
+            }
         }
     </style>
 </header>

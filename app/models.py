@@ -104,3 +104,32 @@ class DJ(db.Model):
 
     def __repr__(self):
         return f"<DJ {self.nombre_dj}>"
+    
+class ObjetoInventario(db.Model):
+    __tablename__ = 'objetos_inventario'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)  # Descripción opcional
+    cantidad = db.Column(db.Integer, nullable=False, default=0)  # Cantidad disponible
+    tipo = db.Column(db.String(50), nullable=False)  # Tipo de objeto (por ejemplo, "Electrónica", "Mobiliario")
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)  # Fecha de creación o registro
+    activo = db.Column(db.Boolean, default=True)  # Nuevo campo
+
+    def __repr__(self):
+        return f"<ObjetoInventario {self.nombre}>"
+    
+class LogInventario(db.Model):
+    __tablename__ = 'logs_inventario'
+
+    id = db.Column(db.Integer, primary_key=True)
+    accion = db.Column(db.String(50), nullable=False)  # Crear, Agregar, Quitar, Eliminar
+    objeto_id = db.Column(db.Integer, db.ForeignKey('objetos_inventario.id'), nullable=False)
+    objeto_nombre = db.Column(db.String(100), nullable=False)
+    cantidad_anterior = db.Column(db.Integer, nullable=True)  # Cantidad antes del cambio
+    cantidad_nueva = db.Column(db.Integer, nullable=True)  # Cantidad después del cambio
+    usuario = db.Column(db.String(100), nullable=False)  # Usuario que realizó la acción
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<LogInventario {self.accion} - {self.objeto_nombre} por {self.usuario}>"

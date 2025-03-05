@@ -5,7 +5,7 @@ from flask import render_template, redirect, url_for, flash, render_template_str
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from wtforms import ValidationError
-from .models import Evento, Funcionario, Raver, Usuario, DJ
+from .models import Evento, Funcionario, LogInventario, ObjetoInventario, Raver, Usuario, DJ
 from .forms import CambiarEstadoForm, CrearFuncionarioForm, LoginForm, RegisterRaverForm
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
@@ -712,3 +712,209 @@ def get_eventos_dj(dj_id):
     
     # Devolver los eventos en formato JSON
     return jsonify(eventos_asociados)
+
+# Ruta para listar los objetos
+@main_bp.route('/inventario')
+def lista_objetos():
+    # Obtener todos los objetos del inventario
+    objetos = ObjetoInventario.query.filter_by(activo=True).all()
+    return render_template('inventario.html', objetos=objetos)
+
+# Ruta para mostrar el formulario de creación
+@main_bp.route('/inventario/crear', methods=['GET'])
+def crear_objeto():
+    return render_template('crear_objeto.html')
+
+@main_bp.route('/inventario/guardar', methods=['POST'])
+@login_required  # Solo usuarios autenticados pueden acceder
+def guardar_objeto():
+    try:
+        # Obtener los datos del formulario
+        nombre = request.form['nombre']
+        descripcion = request.form['descripcion']
+        cantidad = int(request.form['cantidad'])
+        tipo = request.form['tipo']
+
+        # Verificar si ya existe un objeto con el mismo nombre
+        objeto_existente = ObjetoInventario.query.filter_by(nombre=nombre).first()
+        if objeto_existente:
+            return jsonify({'success': False, 'message': 'Ya existe un objeto con ese nombre.'})
+
+        # Crear un nuevo objeto
+        nuevo_objeto = ObjetoInventario(
+            nombre=nombre,
+            descripcion=descripcion,
+            cantidad=cantidad,
+            tipo=tipo
+        )
+
+        # Guardar en la base de datos
+        db.session.add(nuevo_objeto)
+        db.session.commit()
+
+        # Obtener el nombre del usuario autenticado
+        usuario_nombre = current_user.nombre if current_user.is_authenticated else "Usuario Anónimo"
+        print(f"Usuario registrado en el log (Crear): {usuario_nombre}")  # Depuración
+
+        # Registrar el log
+        log = LogInventario(
+            accion="Crear",
+            objeto_id=nuevo_objeto.id,
+            objeto_nombre=nuevo_objeto.nombre,
+            cantidad_anterior=0,  # No había cantidad antes de crear el objeto
+            cantidad_nueva=nuevo_objeto.cantidad,
+            usuario=usuario_nombre,  # Nombre del usuario autenticado
+            fecha=datetime.utcnow()
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        # Devolver una respuesta JSON indicando éxito
+        return jsonify({'success': True, 'message': 'Objeto creado exitosamente.'})
+    except Exception as e:
+        # Capturar cualquier error y devolver un mensaje descriptivo
+        db.session.rollback()  # Deshacer cambios en caso de error
+        return jsonify({'success': False, 'message': f'Error al procesar la solicitud: {str(e)}'})
+
+@main_bp.route('/inventario/detalle/<int:objeto_id>')
+@login_required
+def detalle_objeto(objeto_id):
+    # Obtener el objeto por su ID
+    objeto = ObjetoInventario.query.get_or_404(objeto_id)
+    return render_template('detalle_objeto.html', objeto=objeto)
+
+@main_bp.route('/inventario/eliminar/<int:objeto_id>', methods=['POST'])
+@login_required
+def eliminar_objeto(objeto_id):
+    try:
+        # Obtener el objeto por su ID
+        objeto = ObjetoInventario.query.get_or_404(objeto_id)
+
+        # Guardar la cantidad anterior antes de modificarla
+        cantidad_anterior = objeto.cantidad
+
+        # Marcar el objeto como inactivo y establecer la cantidad en 0
+        objeto.activo = False
+        objeto.cantidad = 0
+
+        # Registrar el log de eliminación
+        usuario_nombre = current_user.nombre if current_user.is_authenticated else "Usuario Anónimo"
+        log = LogInventario(
+            accion="Eliminar",
+            objeto_id=objeto.id,
+            objeto_nombre=objeto.nombre,
+            cantidad_anterior=cantidad_anterior,  # Cantidad antes de la eliminación
+            cantidad_nueva=0,  # La nueva cantidad es 0
+            usuario=usuario_nombre,
+            fecha=datetime.utcnow()
+        )
+        db.session.add(log)
+
+        # Guardar los cambios en la base de datos
+        db.session.commit()
+
+        # Redirigir a la lista de objetos
+        flash('Objeto desactivado exitosamente.', 'success')
+        return redirect(url_for('main.lista_objetos'))
+    except Exception as e:
+        # Capturar cualquier error y devolver un mensaje descriptivo
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error al procesar la solicitud: {str(e)}'})
+    
+@main_bp.route('/inventario/modificar/<int:objeto_id>', methods=['POST'])
+@login_required  # Solo usuarios autenticados pueden acceder
+def modificar_cantidad(objeto_id):
+    try:
+        # Obtener el objeto por su ID
+        objeto = ObjetoInventario.query.get_or_404(objeto_id)
+        
+        # Determinar la acción (agregar o quitar)
+        accion = request.form['accion']
+        cantidad_anterior = objeto.cantidad
+
+        if accion == 'agregar':
+            objeto.cantidad += 1
+        elif accion == 'quitar':
+            if objeto.cantidad > 0:
+                objeto.cantidad -= 1
+            else:
+                return jsonify({'success': False, 'message': 'La cantidad no puede ser menor a 0.'})
+        
+        # Guardar el cambio en la base de datos
+        db.session.commit()
+
+        # Obtener el nombre del usuario autenticado
+        usuario_nombre = current_user.nombre if current_user.is_authenticated else "Usuario Anónimo"
+
+        # Registrar el log
+        log = LogInventario(
+            accion=accion.capitalize(),
+            objeto_id=objeto.id,
+            objeto_nombre=objeto.nombre,
+            cantidad_anterior=cantidad_anterior,
+            cantidad_nueva=objeto.cantidad,
+            usuario=usuario_nombre,  # Usar el nombre del usuario autenticado
+            fecha=datetime.utcnow()
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        # Devolver una respuesta JSON
+        return jsonify({
+            'success': True,
+            'message': f'Se ha {accion}do 1 unidad al objeto "{objeto.nombre}".',
+            'nueva_cantidad': objeto.cantidad
+        })
+    except Exception as e:
+        # Capturar cualquier error y devolver un mensaje descriptivo
+        db.session.rollback()  # Deshacer cambios en caso de error
+        return jsonify({'success': False, 'message': f'Error al procesar la solicitud: {str(e)}'})
+
+@main_bp.route('/inventario/agregar-multiples/<int:objeto_id>', methods=['POST'])
+@login_required  # Solo usuarios autenticados pueden acceder
+def agregar_multiples(objeto_id):
+    try:
+        # Obtener el objeto por su ID
+        objeto = ObjetoInventario.query.get_or_404(objeto_id)
+
+        # Obtener la cantidad ingresada por el usuario
+        cantidad = int(request.form['cantidad'])
+        cantidad_anterior = objeto.cantidad
+        objeto.cantidad += cantidad
+
+        # Guardar el cambio en la base de datos
+        db.session.commit()
+
+        # Obtener el nombre del usuario autenticado
+        usuario_nombre = current_user.nombre if current_user.is_authenticated else "Usuario Anónimo"
+        print(f"Usuario registrado en el log (Agregar múltiples): {usuario_nombre}")  # Depuración
+
+        # Registrar el log
+        log = LogInventario(
+            accion="Agregar múltiples",
+            objeto_id=objeto.id,
+            objeto_nombre=objeto.nombre,
+            cantidad_anterior=cantidad_anterior,
+            cantidad_nueva=objeto.cantidad,
+            usuario=usuario_nombre,  # Nombre del usuario autenticado
+            fecha=datetime.utcnow()
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        # Devolver una respuesta JSON
+        return jsonify({
+            'success': True,
+            'message': f'Se han agregado {cantidad} unidades al objeto "{objeto.nombre}".',
+            'nueva_cantidad': objeto.cantidad
+        })
+    except Exception as e:
+        # Capturar cualquier error y devolver un mensaje descriptivo
+        db.session.rollback()  # Deshacer cambios en caso de error
+        return jsonify({'success': False, 'message': f'Error al procesar la solicitud: {str(e)}'})
+
+@main_bp.route('/inventario/logs')
+def lista_logs():
+    # Obtener todos los logs ordenados por fecha descendente (los más recientes primero)
+    logs = LogInventario.query.order_by(LogInventario.fecha.desc()).all()
+    return render_template('lista_logs.html', logs=logs)

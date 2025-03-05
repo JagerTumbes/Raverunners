@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Objeto</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container mt-5">
+        <h1>Crear Nuevo Objeto</h1>
+        
+        <!-- Formulario para crear un nuevo objeto -->
+        <form id="crear-objeto-form" method="POST" action="{{ url_for('main.guardar_objeto') }}">
+            <div class="form-group">
+                <label for="nombre">Nombre:</label>
+                <input type="text" class="form-control" id="nombre" name="nombre" required>
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripción:</label>
+                <textarea class="form-control" id="descripcion" name="descripcion"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="cantidad">Cantidad:</label>
+                <input type="number" class="form-control" id="cantidad" name="cantidad" min="0" required>
+            </div>
+            <div class="form-group">
+                <label for="tipo">Tipo:</label>
+                <select class="form-control" id="tipo" name="tipo" required>
+                    <option value="Electrónica">Electrónica</option>
+                    <option value="Mobiliario">Mobiliario</option>
+                    <option value="Herramientas">Herramientas</option>
+                    <option value="Otros">Otros</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success">Guardar Objeto</button>
+        </form>
+
+        <!-- Modal para mostrar mensajes -->
+        <div class="modal fade" id="mensajeModal" tabindex="-1" role="dialog" aria-labelledby="mensajeModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="mensajeModalLabel">Mensaje</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" id="mensajeModalBody">
+                        <!-- El mensaje se insertará aquí -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Interceptamos el envío del formulario
+            $('#crear-objeto-form').on('submit', function(event) {
+                event.preventDefault(); // Evitamos el envío tradicional del formulario
+
+                // Enviamos los datos del formulario mediante AJAX
+                $.ajax({
+                    url: $(this).attr('action'),
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        if (response.success) {
+                            // Si el objeto se creó correctamente, mostramos un mensaje y redirigimos
+                            $('#mensajeModalBody').text(response.message);
+                            $('#mensajeModal').modal('show');
+                            setTimeout(function() {
+                                window.location.href = "{{ url_for('main.lista_objetos') }}";
+                            }, 2000); // Redirigimos después de 2 segundos
+                        } else {
+                            // Si hay un error, mostramos el mensaje en el modal
+                            $('#mensajeModalBody').text(response.message);
+                            $('#mensajeModal').modal('show');
+                        }
+                    },
+                    error: function() {
+                        // Manejamos errores de conexión
+                        $('#mensajeModalBody').text('Error al procesar la solicitud. Por favor, intenta nuevamente.');
+                        $('#mensajeModal').modal('show');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
