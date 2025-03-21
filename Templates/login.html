@@ -3,35 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Jacquard+24&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+
     <title>Login</title>
 </head>
-<body class="bg-light">
-    <div class="container mt-5">
-        <h2 class="text-center mb-4">Iniciar sesión</h2>
-        
+<body>
+    <tLogin class="title">RaveRunners</tLogin>
+    <tLogin class="subtitle">Events App</tLogin>
+    <login>
 
-        <form method="POST" class="p-4 bg-white rounded shadow-sm">
+    </login>
+    <div class="loginCard">
+        <h4>Bienvenido a las rave!!</h4>
+        <h4>Inicia sesion</h4>
+
+        <form method="POST" class="formLogin">
             {{ form.hidden_tag() }}
             
             <div class="form-group">
                 {{ form.apodo.label }}<br>
-                {{ form.apodo(class_="form-control", size=32) }}
+                {{ form.apodo( size=32) }}
                 {% for error in form.apodo.errors %}
                     <small class="text-danger">[{{ error }}]</small><br>
                 {% endfor %}
             </div>
 
             <div class="form-group">
-                {{ form.password.label }}<br>
-                {{ form.password(class_="form-control", size=32) }}
+                {{ form.password.label }}
+                <br>
+                {{ form.password( size=32) }}
                 {% for error in form.password.errors %}
                     <small class="text-danger">[{{ error }}]</small><br>
                 {% endfor %}
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">Iniciar sesión</button>
+            <button type="submit">Iniciar sesión</button>
         </form>
     </div>
 
