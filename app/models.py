@@ -62,6 +62,13 @@ class Raver(db.Model):
     def __repr__(self):
         return f"<Raver ID {self.id}>"
 
+# Tabla intermedia para la relación muchos a muchos entre Evento y DJ
+evento_dj = db.Table(
+    'evento_dj',
+    db.Column('id_evento', db.Integer, db.ForeignKey('eventos.id_evento'), primary_key=True),
+    db.Column('id_dj', db.Integer, db.ForeignKey('djs.id'), primary_key=True)
+)
+
 class Evento(db.Model):
     __tablename__ = 'eventos'
 
@@ -69,13 +76,18 @@ class Evento(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     lugar = db.Column(db.String(100), nullable=False)
     fecha = db.Column(db.Date, nullable=False)
+    tipo = db.Column(db.String(50), nullable=False)  # Nuevo campo para el tipo de evento
     asistentes = db.Column(db.JSON, nullable=True)  # Sin valor por defecto en la BD
     estado = db.Column(db.String(20), nullable=False, default='preparacion')
 
-    def __init__(self, nombre, lugar, fecha, estado='preparacion', asistentes=None):
+    # Relación muchos a muchos con DJs
+    djs = db.relationship('DJ', secondary=evento_dj, back_populates='eventos')
+
+    def __init__(self, nombre, lugar, fecha, tipo, estado='preparacion', asistentes=None):
         self.nombre = nombre
         self.lugar = lugar
         self.fecha = fecha
+        self.tipo = tipo  # Inicializar el tipo de evento
         self.estado = estado
         self.asistentes = asistentes if asistentes is not None else []
 
@@ -87,5 +99,37 @@ class DJ(db.Model):
     descripcion = db.Column(db.Text, nullable=True)
     foto = db.Column(db.String(255), nullable=True)
 
+    # Relación muchos a muchos con Eventos
+    eventos = db.relationship('Evento', secondary=evento_dj, back_populates='djs')
+
     def __repr__(self):
         return f"<DJ {self.nombre_dj}>"
+    
+class ObjetoInventario(db.Model):
+    __tablename__ = 'objetos_inventario'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)  # Descripción opcional
+    cantidad = db.Column(db.Integer, nullable=False, default=0)  # Cantidad disponible
+    tipo = db.Column(db.String(50), nullable=False)  # Tipo de objeto (por ejemplo, "Electrónica", "Mobiliario")
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)  # Fecha de creación o registro
+    activo = db.Column(db.Boolean, default=True)  # Nuevo campo
+
+    def __repr__(self):
+        return f"<ObjetoInventario {self.nombre}>"
+    
+class LogInventario(db.Model):
+    __tablename__ = 'logs_inventario'
+
+    id = db.Column(db.Integer, primary_key=True)
+    accion = db.Column(db.String(50), nullable=False)  # Crear, Agregar, Quitar, Eliminar
+    objeto_id = db.Column(db.Integer, db.ForeignKey('objetos_inventario.id'), nullable=False)
+    objeto_nombre = db.Column(db.String(100), nullable=False)
+    cantidad_anterior = db.Column(db.Integer, nullable=True)  # Cantidad antes del cambio
+    cantidad_nueva = db.Column(db.Integer, nullable=True)  # Cantidad después del cambio
+    usuario = db.Column(db.String(100), nullable=False)  # Usuario que realizó la acción
+    fecha = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<LogInventario {self.accion} - {self.objeto_nombre} por {self.usuario}>"

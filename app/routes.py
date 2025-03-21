@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 from flask import Blueprint, jsonify, request, current_app, send_file
 from flask import render_template, redirect, url_for, flash, render_template_string
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from wtforms import ValidationError
-from .models import Evento, Funcionario, Raver, Usuario, DJ
+from .models import Evento, Funcionario, LogInventario, ObjetoInventario, Raver, Usuario, DJ
 from .forms import CambiarEstadoForm, CrearFuncionarioForm, LoginForm, RegisterRaverForm
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
@@ -231,36 +231,61 @@ def inicio_funcionario():
     # Si el usuario es funcionario, renderizamos la página de inicio para funcionarios
     return render_template('inicio_funcionario.html')  # Asegúrate de tener este template en tu carpeta de templates
 
+from datetime import datetime, timezone
+
 @main_bp.route('/crear_evento', methods=['GET', 'POST'])
 @login_required
 def crear_evento():
-    if current_user.tipo_usuario != 'admin':  # Solo admin puede acceder
+    # Verificar si el usuario es un administrador
+    if current_user.tipo_usuario != 'admin':
         flash("No tienes permisos para acceder a esta página.", "danger")
         return redirect(url_for('main.index'))
 
     if request.method == 'POST':
+        # Obtener los datos del formulario
         nombre = request.form.get('nombre')
         lugar = request.form.get('lugar')
-        fecha = request.form.get('fecha')
+        fecha_str = request.form.get('fecha')  # Fecha en formato YYYY-MM-DD
+        tipo = request.form.get('tipo')  # Tipo de evento
         estado = request.form.get('estado', 'preparacion')
 
-        if not nombre or not lugar or not fecha:
+        # Validar que todos los campos obligatorios estén presentes
+        if not nombre or not lugar or not fecha_str or not tipo:
             flash("Todos los campos son obligatorios.", "danger")
             return render_template('crear_evento.html')
 
-        # Crear nuevo evento
-        nuevo_evento = Evento(
-            nombre=nombre,
-            lugar=lugar,
-            fecha=datetime.strptime(fecha, '%Y-%m-%d').date(),
-            estado=estado,
-            asistentes=[]
-        )
+        # Validar que el tipo de evento sea uno de los valores permitidos
+        tipos_permitidos = ['rave', 'after', 'limpieza', 'eventos_locales', 'exploraciones_urbanas']
+        if tipo not in tipos_permitidos:
+            flash("El tipo de evento seleccionado no es válido.", "danger")
+            return render_template('crear_evento.html')
 
-        db.session.add(nuevo_evento)
-        db.session.commit()
-        flash("Evento creado exitosamente.", "success")
-        return redirect(url_for('main.inicio_admin'))
+        try:
+            # Convertir la fecha a un objeto datetime con zona horaria
+            fecha_naive = datetime.strptime(fecha_str, '%Y-%m-%d')  # Fecha sin zona horaria
+            fecha_aware = fecha_naive.replace(tzinfo=timezone.utc)  # Agregar zona horaria UTC
+
+            # Crear nuevo evento
+            nuevo_evento = Evento(
+                nombre=nombre,
+                lugar=lugar,
+                fecha=fecha_aware.date(),  # Guardar solo la fecha (sin hora)
+                tipo=tipo,  # Guardar el tipo de evento
+                estado=estado,
+                asistentes=[]
+            )
+
+            # Agregar el evento a la base de datos
+            db.session.add(nuevo_evento)
+            db.session.commit()
+
+            flash("Evento creado exitosamente.", "success")
+            return redirect(url_for('main.inicio_admin'))
+
+        except Exception as e:
+            db.session.rollback()  # Deshacer los cambios en caso de error
+            flash(f"Error al crear el evento: {str(e)}", "danger")
+            return render_template('crear_evento.html')
 
     return render_template('crear_evento.html')
 
@@ -268,10 +293,6 @@ def crear_evento():
 @main_bp.route('/ver_eventos')
 @login_required
 def ver_eventos():
-    if current_user.tipo_usuario != 'admin':  # Solo admin puede ver eventos
-        flash("No tienes permisos para acceder a esta página.", "danger")
-        return redirect(url_for('main.index'))
-
     eventos = Evento.query.all()  # Obtener todos los eventos
     return render_template('ver_eventos.html', eventos=eventos)
 
@@ -481,10 +502,6 @@ def procesar_qr():
 @main_bp.route('/djs', methods=['GET'])
 @login_required
 def listar_djs():
-    if current_user.tipo_usuario != 'admin':
-        flash("No tienes permisos para acceder a esta página.", "danger")
-        return redirect(url_for('main.index'))
-
     djs = DJ.query.all()
     return render_template('djs.html', djs=djs)
 
@@ -570,12 +587,330 @@ def inicio_dj():
 
 @main_bp.route('/dj/<int:dj_id>')
 def pagina_personalizada_dj(dj_id):
-    # Construir la ruta al archivo HTML personalizado
-    dj_html_path = f'djs/dj_{dj_id}.html'
+    # Obtener el DJ por su ID
+    dj = DJ.query.get_or_404(dj_id)
+    
+    # Construir el nombre del archivo HTML basado en el dj_id
+    template_name = f'djs/dj_{dj.id}.html'
+    
+    # Renderizar la plantilla específica del DJ
+    return render_template(template_name, dj=dj)
+    
+@main_bp.route('/api/eventos', methods=['GET'])
+@login_required
+def obtener_eventos():
+    # Obtener eventos futuros
+    eventos = Evento.query.filter(Evento.fecha >= datetime.now().date()).all()
 
+    # Formatear los eventos como JSON
+    eventos_json = [
+        {
+            "id": evento.id_evento,
+            "nombre": evento.nombre,
+            "lugar": evento.lugar,
+            "fecha": evento.fecha.strftime("%Y-%m-%d"),
+            "estado": evento.estado,
+            "tipo": evento.tipo  # Añadir el tipo de evento
+        }
+        for evento in eventos
+    ]
+
+    return jsonify(eventos_json)
+
+@main_bp.route('/calendario')
+@login_required  # Solo usuarios logueados pueden acceder
+def calendario():
+    # Verificar si el usuario tiene permisos para ver el calendario
+    if current_user.tipo_usuario not in ['admin', 'raver', 'funcionario', 'dj']:
+        flash('No tienes permisos para acceder a esta página.', 'danger')
+        return redirect(url_for('main.index'))  # Redirigir a la página principal
+
+    # Renderizar la página del calendario
+    return render_template('calendario.html')
+
+@main_bp.route('/dia/<int:year>/<int:month>/<int:day>')
+@login_required
+def ver_dia(year, month, day):
+    # Convertir los parámetros en un objeto Date
+    selected_date = datetime(year, month, day).date()
+
+    # Obtener los eventos para ese día
+    eventos_del_dia = Evento.query.filter(
+        Evento.fecha == selected_date
+    ).all()
+
+    # Renderizar la página con los eventos del día
+    return render_template('ver_dia.html', eventos=eventos_del_dia, fecha=selected_date)
+
+@main_bp.route('/evento/<int:evento_id>/asociar_djs', methods=['GET', 'POST'])
+@login_required
+def asociar_djs_a_evento(evento_id):
+    # Verificar si el usuario es un administrador
+    if current_user.tipo_usuario != 'admin':
+        flash("No tienes permisos para acceder a esta página.", "danger")
+        return redirect(url_for('main.index'))
+
+    evento = Evento.query.get_or_404(evento_id)
+    djs_disponibles = DJ.query.all()
+
+    if request.method == 'POST':
+        # Obtener los IDs de los DJs seleccionados
+        dj_ids = request.form.getlist('djs')
+
+        # Limpiar los DJs actuales del evento
+        evento.djs.clear()
+
+        # Asociar los nuevos DJs al evento
+        for dj_id in dj_ids:
+            dj = DJ.query.get(dj_id)
+            if dj:
+                evento.djs.append(dj)
+
+        db.session.commit()
+        flash(f"DJs asociados al evento '{evento.nombre}' exitosamente.", "success")
+        return redirect(url_for('main.ver_eventos'))  # Redirigir a la lista de eventos
+
+    return render_template('asociar_djs.html', evento=evento, djs_disponibles=djs_disponibles)
+
+@main_bp.route('/dj/eventos_asociados/<int:dj_id>', methods=['GET'])
+def eventos_asociados_dj(dj_id):
+    # Obtener el DJ por su ID
+    dj = DJ.query.get_or_404(dj_id)
+
+    # Obtener los eventos asociados al DJ
+    eventos = [
+        {
+            "id": evento.id_evento,
+            "title": evento.nombre,
+            "start": evento.fecha.strftime('%Y-%m-%d'),
+            "url": url_for('main.detalle_evento', evento_id=evento.id_evento, _external=True)
+        }
+        for evento in dj.eventos
+    ]
+
+    return jsonify(eventos)
+
+@main_bp.route('/api/eventos-dj/<int:dj_id>', methods=['GET'])
+def get_eventos_dj(dj_id):
+    # Obtener el DJ por su ID
+    dj = DJ.query.get_or_404(dj_id)
+    
+    # Construir la lista de eventos asociados al DJ
+    eventos_asociados = []
+    for evento in dj.eventos:
+        eventos_asociados.append({
+            'id': evento.id_evento,  # Usar id_evento en lugar de id
+            'title': evento.nombre,
+            'start': evento.fecha.strftime('%Y-%m-%d'),
+            'end': None,  # Si no hay fecha de finalización
+            'isAssociated': True  # Marcar como asociado
+        })
+    
+    # Devolver los eventos en formato JSON
+    return jsonify(eventos_asociados)
+
+# Ruta para listar los objetos
+@main_bp.route('/inventario')
+def lista_objetos():
+    # Obtener todos los objetos del inventario
+    objetos = ObjetoInventario.query.filter_by(activo=True).all()
+    return render_template('inventario.html', objetos=objetos)
+
+# Ruta para mostrar el formulario de creación
+@main_bp.route('/inventario/crear', methods=['GET'])
+def crear_objeto():
+    return render_template('crear_objeto.html')
+
+@main_bp.route('/inventario/guardar', methods=['POST'])
+@login_required  # Solo usuarios autenticados pueden acceder
+def guardar_objeto():
     try:
-        # Renderizar el archivo HTML personalizado
-        return render_template(dj_html_path)
+        # Obtener los datos del formulario
+        nombre = request.form['nombre']
+        descripcion = request.form['descripcion']
+        cantidad = int(request.form['cantidad'])
+        tipo = request.form['tipo']
+
+        # Verificar si ya existe un objeto con el mismo nombre
+        objeto_existente = ObjetoInventario.query.filter_by(nombre=nombre).first()
+        if objeto_existente:
+            return jsonify({'success': False, 'message': 'Ya existe un objeto con ese nombre.'})
+
+        # Crear un nuevo objeto
+        nuevo_objeto = ObjetoInventario(
+            nombre=nombre,
+            descripcion=descripcion,
+            cantidad=cantidad,
+            tipo=tipo
+        )
+
+        # Guardar en la base de datos
+        db.session.add(nuevo_objeto)
+        db.session.commit()
+
+        # Obtener el nombre del usuario autenticado
+        usuario_nombre = current_user.nombre if current_user.is_authenticated else "Usuario Anónimo"
+        print(f"Usuario registrado en el log (Crear): {usuario_nombre}")  # Depuración
+
+        # Registrar el log
+        log = LogInventario(
+            accion="Crear",
+            objeto_id=nuevo_objeto.id,
+            objeto_nombre=nuevo_objeto.nombre,
+            cantidad_anterior=0,  # No había cantidad antes de crear el objeto
+            cantidad_nueva=nuevo_objeto.cantidad,
+            usuario=usuario_nombre,  # Nombre del usuario autenticado
+            fecha=datetime.utcnow()
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        # Devolver una respuesta JSON indicando éxito
+        return jsonify({'success': True, 'message': 'Objeto creado exitosamente.'})
     except Exception as e:
-        # Si el archivo no existe, mostrar un error 404
-        return render_template('404.html'), 404
+        # Capturar cualquier error y devolver un mensaje descriptivo
+        db.session.rollback()  # Deshacer cambios en caso de error
+        return jsonify({'success': False, 'message': f'Error al procesar la solicitud: {str(e)}'})
+
+@main_bp.route('/inventario/detalle/<int:objeto_id>')
+@login_required
+def detalle_objeto(objeto_id):
+    # Obtener el objeto por su ID
+    objeto = ObjetoInventario.query.get_or_404(objeto_id)
+    return render_template('detalle_objeto.html', objeto=objeto)
+
+@main_bp.route('/inventario/eliminar/<int:objeto_id>', methods=['POST'])
+@login_required
+def eliminar_objeto(objeto_id):
+    try:
+        # Obtener el objeto por su ID
+        objeto = ObjetoInventario.query.get_or_404(objeto_id)
+
+        # Guardar la cantidad anterior antes de modificarla
+        cantidad_anterior = objeto.cantidad
+
+        # Marcar el objeto como inactivo y establecer la cantidad en 0
+        objeto.activo = False
+        objeto.cantidad = 0
+
+        # Registrar el log de eliminación
+        usuario_nombre = current_user.nombre if current_user.is_authenticated else "Usuario Anónimo"
+        log = LogInventario(
+            accion="Eliminar",
+            objeto_id=objeto.id,
+            objeto_nombre=objeto.nombre,
+            cantidad_anterior=cantidad_anterior,  # Cantidad antes de la eliminación
+            cantidad_nueva=0,  # La nueva cantidad es 0
+            usuario=usuario_nombre,
+            fecha=datetime.utcnow()
+        )
+        db.session.add(log)
+
+        # Guardar los cambios en la base de datos
+        db.session.commit()
+
+        # Redirigir a la lista de objetos
+        flash('Objeto desactivado exitosamente.', 'success')
+        return redirect(url_for('main.lista_objetos'))
+    except Exception as e:
+        # Capturar cualquier error y devolver un mensaje descriptivo
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Error al procesar la solicitud: {str(e)}'})
+    
+@main_bp.route('/inventario/modificar/<int:objeto_id>', methods=['POST'])
+@login_required  # Solo usuarios autenticados pueden acceder
+def modificar_cantidad(objeto_id):
+    try:
+        # Obtener el objeto por su ID
+        objeto = ObjetoInventario.query.get_or_404(objeto_id)
+        
+        # Determinar la acción (agregar o quitar)
+        accion = request.form['accion']
+        cantidad_anterior = objeto.cantidad
+
+        if accion == 'agregar':
+            objeto.cantidad += 1
+        elif accion == 'quitar':
+            if objeto.cantidad > 0:
+                objeto.cantidad -= 1
+            else:
+                return jsonify({'success': False, 'message': 'La cantidad no puede ser menor a 0.'})
+        
+        # Guardar el cambio en la base de datos
+        db.session.commit()
+
+        # Obtener el nombre del usuario autenticado
+        usuario_nombre = current_user.nombre if current_user.is_authenticated else "Usuario Anónimo"
+
+        # Registrar el log
+        log = LogInventario(
+            accion=accion.capitalize(),
+            objeto_id=objeto.id,
+            objeto_nombre=objeto.nombre,
+            cantidad_anterior=cantidad_anterior,
+            cantidad_nueva=objeto.cantidad,
+            usuario=usuario_nombre,  # Usar el nombre del usuario autenticado
+            fecha=datetime.utcnow()
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        # Devolver una respuesta JSON
+        return jsonify({
+            'success': True,
+            'message': f'Se ha {accion}do 1 unidad al objeto "{objeto.nombre}".',
+            'nueva_cantidad': objeto.cantidad
+        })
+    except Exception as e:
+        # Capturar cualquier error y devolver un mensaje descriptivo
+        db.session.rollback()  # Deshacer cambios en caso de error
+        return jsonify({'success': False, 'message': f'Error al procesar la solicitud: {str(e)}'})
+
+@main_bp.route('/inventario/agregar-multiples/<int:objeto_id>', methods=['POST'])
+@login_required  # Solo usuarios autenticados pueden acceder
+def agregar_multiples(objeto_id):
+    try:
+        # Obtener el objeto por su ID
+        objeto = ObjetoInventario.query.get_or_404(objeto_id)
+
+        # Obtener la cantidad ingresada por el usuario
+        cantidad = int(request.form['cantidad'])
+        cantidad_anterior = objeto.cantidad
+        objeto.cantidad += cantidad
+
+        # Guardar el cambio en la base de datos
+        db.session.commit()
+
+        # Obtener el nombre del usuario autenticado
+        usuario_nombre = current_user.nombre if current_user.is_authenticated else "Usuario Anónimo"
+        print(f"Usuario registrado en el log (Agregar múltiples): {usuario_nombre}")  # Depuración
+
+        # Registrar el log
+        log = LogInventario(
+            accion="Agregar múltiples",
+            objeto_id=objeto.id,
+            objeto_nombre=objeto.nombre,
+            cantidad_anterior=cantidad_anterior,
+            cantidad_nueva=objeto.cantidad,
+            usuario=usuario_nombre,  # Nombre del usuario autenticado
+            fecha=datetime.utcnow()
+        )
+        db.session.add(log)
+        db.session.commit()
+
+        # Devolver una respuesta JSON
+        return jsonify({
+            'success': True,
+            'message': f'Se han agregado {cantidad} unidades al objeto "{objeto.nombre}".',
+            'nueva_cantidad': objeto.cantidad
+        })
+    except Exception as e:
+        # Capturar cualquier error y devolver un mensaje descriptivo
+        db.session.rollback()  # Deshacer cambios en caso de error
+        return jsonify({'success': False, 'message': f'Error al procesar la solicitud: {str(e)}'})
+
+@main_bp.route('/inventario/logs')
+def lista_logs():
+    # Obtener todos los logs ordenados por fecha descendente (los más recientes primero)
+    logs = LogInventario.query.order_by(LogInventario.fecha.desc()).all()
+    return render_template('lista_logs.html', logs=logs)

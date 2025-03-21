@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        /* Estilo personalizado para las columnas */
+        .table-fixed-columns th,
+        .table-fixed-columns td {
+            width: 16.6%; /* Divide el 100% entre 6 columnas */
+            word-wrap: break-word; /* Asegura que el texto no desborde */
+        }
+        .btn-sm {
+            margin-right: 5px; /* Espaciado entre los botones */
+        }
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container mt-5">
+        <h1>Lista de Objetos en Inventario</h1>
+        
+        <!-- Botón para crear un nuevo objeto -->
+        <a href="{{ url_for('main.crear_objeto') }}" class="btn btn-primary mb-3">Crear Nuevo Objeto</a>
+
+        <!-- Tabla de objetos -->
+        <table class="table table-bordered table-fixed-columns">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Cantidad</th>
+                    <th>Opciones</th> <!-- Nueva columna -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for objeto in objetos %}
+                <tr>
+                    <td>{{ objeto.nombre }}</td>
+                    <td>{{ objeto.descripcion or 'Sin descripción' }}</td>
+                    <td>{{ objeto.cantidad }}</td>
+                    <td>
+                        <!-- Botón para ver detalles -->
+                        <a href="{{ url_for('main.detalle_objeto', objeto_id=objeto.id) }}" class="btn btn-info btn-sm">Detalles</a>
+                        
+                        <!-- Botón para eliminar -->
+                        <form action="{{ url_for('main.eliminar_objeto', objeto_id=objeto.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro de eliminar este objeto?')">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs del Inventario</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- CSS Personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        /* Estilo personalizado para las columnas */
+        .table-fixed-columns th,
+        .table-fixed-columns td {
+            white-space: nowrap; /* Evita que el texto se rompa en varias líneas */
+        }
+        .table-fixed-columns th:nth-child(1),
+        .table-fixed-columns td:nth-child(1) {
+            width: 15%; /* Acción */
+        }
+        .table-fixed-columns th:nth-child(2),
+        .table-fixed-columns td:nth-child(2) {
+            width: 25%; /* Objeto */
+        }
+        .table-fixed-columns th:nth-child(3),
+        .table-fixed-columns td:nth-child(3) {
+            width: 10%; /* Cantidad Anterior */
+        }
+        .table-fixed-columns th:nth-child(4),
+        .table-fixed-columns td:nth-child(4) {
+            width: 10%; /* Cantidad Nueva */
+        }
+        .table-fixed-columns th:nth-child(5),
+        .table-fixed-columns td:nth-child(5) {
+            width: 15%; /* Usuario */
+        }
+        .table-fixed-columns th:nth-child(6),
+        .table-fixed-columns td:nth-child(6) {
+            width: 25%; /* Fecha */
+        }
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Logs del Inventario</h1>
+
+        <!-- Tabla de logs -->
+        <table class="table table-bordered table-striped table-fixed-columns">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Acción</th>
+                    <th>Objeto</th>
+                    <th>Cantidad Anterior</th>
+                    <th>Cantidad Nueva</th>
+                    <th>Usuario</th> <!-- Nueva columna -->
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if logs %}
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.accion }}</td>
+                        <td>{{ log.objeto_nombre }}</td>
+                        <td>{{ log.cantidad_anterior }}</td>
+                        <td>{{ log.cantidad_nueva }}</td>
+                        <td>{{ log.usuario }}</td> <!-- Mostrar el usuario -->
+                        <td>{{ log.fecha.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center">No hay registros disponibles.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <!-- Botón para regresar -->
+        <a href="{{ url_for('main.lista_objetos') }}" class="btn btn-secondary">Volver al Inventario</a>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

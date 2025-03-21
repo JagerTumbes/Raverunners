@@ -13,7 +13,8 @@
         <h1>Bienvenido, DJ!</h1>
         <p>Esta es la página de inicio para los usuarios tipo DJ.</p>
         <div class="text-center mt-4">
-            <!-- Aquí puedes agregar contenido específico para DJs -->
+            <a href="{{ url_for('main.listar_djs') }}" class="btn btn-primary">Ver DJs</a>
+            <a href="{{ url_for('main.calendario') }}" class="btn btn-primary">Calendario</a>
         </div>
     </div>
 
