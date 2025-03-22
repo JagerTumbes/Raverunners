@@ -6,26 +6,8 @@
     <title>Inicio Admin</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <style>
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/inicio.css') }}">
+
 </head>
 <body>
     {% include 'header.html' %}
@@ -34,15 +16,15 @@
         <h2>Bienvenido al Panel de Administración</h2>
         <p>Hola, {{ current_user.nombre }} {{ current_user.apellido }}. Estás logueado como administrador.</p>
 
-        <div class="btn-group">
-            <a href="{{ url_for('main.crear_funcionario') }}" class="btn btn-primary">Crear Funcionario</a>
-            <a href="{{ url_for('main.admin_usuarios') }}" class="btn btn-primary">Ver Usuarios</a>
-            <a href="{{ url_for('main.ver_eventos') }}" class="btn btn-primary">Ver Eventos</a>
-            <a href="{{ url_for('main.lista_objetos') }}" class="btn btn-primary">Inventario</a>
-            <a href="{{ url_for('main.escanear_qr') }}" class="btn btn-primary">Escanear Código QR</a>
-            <a href="{{ url_for('main.listar_djs') }}" class="btn btn-primary">Ver DJs</a>
-            <a href="{{ url_for('main.calendario') }}" class="btn btn-primary">Calendario</a>
-            <a href="{{ url_for('main.lista_logs') }}" class="btn btn-info mb-3">Registros</a>
+        <div class="menu">
+            <a href="{{ url_for('main.crear_funcionario') }}" class="inicioButton">Crear Funcionario</a>
+            <a href="{{ url_for('main.admin_usuarios') }}" class="inicioButton">Ver Usuarios</a>
+            <a href="{{ url_for('main.ver_eventos') }}" class="inicioButton">Ver Eventos</a>
+            <a href="{{ url_for('main.lista_objetos') }}" class="inicioButton">Inventario</a>
+            <a href="{{ url_for('main.escanear_qr') }}" class="inicioButton">Escanear Código QR</a>
+            <a href="{{ url_for('main.listar_djs') }}" class="inicioButton">Ver DJs</a>
+            <a href="{{ url_for('main.calendario') }}" class="inicioButton">Calendario</a>
+            <a href="{{ url_for('main.lista_logs') }}" class="inicioButton">Registros</a>
             
         </div>
     </div>
