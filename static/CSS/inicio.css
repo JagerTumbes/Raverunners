@@ -24,7 +24,7 @@ body {
 
 }
 .inicioButton:hover{
-
+    color: #f300ff;
     background: linear-gradient(
         to left,
         #f300ff 20%,

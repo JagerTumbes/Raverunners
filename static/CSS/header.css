@@ -25,10 +25,26 @@
 
 .header {
     background-color: black;
+
+    display: flex;
+    justify-content: space-between; 
+    align-items: center; 
+    
+}
+.header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%; /* Ocupa todo el ancho disponible */
 }
 .dropdown-menu {
     margin-top: 0;
 }
+
+.container{
+    margin: 0px;
+}
+
 
 .tNavBar{
     font-size:50px;
