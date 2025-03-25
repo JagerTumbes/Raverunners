@@ -8,6 +8,15 @@ from io import BytesIO
 from base64 import b64encode
 from flask_login import UserMixin  # Importar UserMixin
 
+
+# Tabla intermedia para asociar usuarios y recompensas canjeadas
+recompensas_canjeadas = db.Table(
+    'recompensas_canjeadas',
+    db.Column('usuario_id', db.Integer, db.ForeignKey('usuarios.id'), primary_key=True),
+    db.Column('recompensa_id', db.Integer, db.ForeignKey('recompensas.id'), primary_key=True),
+    db.Column('fecha_canje', db.DateTime, default=datetime.utcnow)  # Fecha del canje
+)
+
 class Usuario(db.Model, UserMixin):
     __tablename__ = 'usuarios'
 
@@ -21,6 +30,15 @@ class Usuario(db.Model, UserMixin):
     apodo = db.Column(db.String(100), unique=True, nullable=True)  # Apodo para login
     is_active = db.Column(db.Boolean, default=False)  # Valor predeterminado en False (inactivo)
     rut = db.Column(db.String(9), unique=True, nullable=False)  # RUT como número de 9 caracteres
+    kuyen_coins = db.Column(db.Integer, default=0)  # Nuevo campo para Kuyen Coins
+
+    # Relación con recompensas canjeadas
+    recompensas_canjeadas = db.relationship(
+        'Recompensa',
+        secondary=recompensas_canjeadas,
+        backref=db.backref('usuarios', lazy='dynamic'),
+        lazy='dynamic'
+    )
 
     # Relaciones con tablas específicas
     admin = db.relationship('Admin', backref='usuario', uselist=False)
@@ -133,3 +151,14 @@ class LogInventario(db.Model):
 
     def __repr__(self):
         return f"<LogInventario {self.accion} - {self.objeto_nombre} por {self.usuario}>"
+    
+class Recompensa(db.Model):
+    __tablename__ = 'recompensas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    valor = db.Column(db.Integer, nullable=False)  # Valor en Kuyen Coins
+    descripcion = db.Column(db.String(200), nullable=True)  # Descripción opcional
+
+    def __repr__(self):
+        return f"<Recompensa {self.nombre} (Valor: {self.valor} Kuyen Coins)>"

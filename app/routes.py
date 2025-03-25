@@ -5,7 +5,7 @@ from flask import render_template, redirect, url_for, flash, render_template_str
 from flask_login import current_user, login_required, login_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from wtforms import ValidationError
-from .models import Evento, Funcionario, LogInventario, ObjetoInventario, Raver, Usuario, DJ
+from .models import Evento, Funcionario, LogInventario, ObjetoInventario, Raver, Recompensa, Usuario, DJ
 from .forms import CambiarEstadoForm, CrearFuncionarioForm, LoginForm, RegisterRaverForm
 from sqlalchemy.orm.attributes import flag_modified
 from werkzeug.utils import secure_filename
@@ -486,12 +486,19 @@ def procesar_qr():
         # Notificar a SQLAlchemy que la columna "asistentes" ha sido modificada
         flag_modified(evento, "asistentes")
 
+        # Otorgar 1 Kuyen Coin al usuario
+        usuario.kuyen_coins += 1
+        print(f"Kuyen Coins actualizados para el usuario {usuario.nombre}: {usuario.kuyen_coins}")  # Log de Kuyen Coins
+
         # Guardar los cambios en la base de datos
         db.session.commit()
 
-        print(f"{usuario.nombre} {usuario.apellido} ha sido añadido al evento.")
-        flash(f"{usuario.nombre} {usuario.apellido} ha sido añadido como asistente.", "success")
-        return jsonify({"message": f"{usuario.nombre} {usuario.apellido} ha sido añadido como asistente."}), 200
+        print(f"{usuario.nombre} {usuario.apellido} ha sido añadido al evento y ha ganado 1 Kuyen Coin.")
+        flash(f"{usuario.nombre} {usuario.apellido} ha sido añadido como asistente y ha ganado 1 Kuyen Coin.", "success")
+        return jsonify({
+            "message": f"{usuario.nombre} {usuario.apellido} ha sido añadido como asistente y ha ganado 1 Kuyen Coin.",
+            "kuyen_coins": usuario.kuyen_coins
+        }), 200
 
     except Exception as e:
         print(f"Error inesperado: {str(e)}")  # Log de la excepción
@@ -914,3 +921,84 @@ def lista_logs():
     # Obtener todos los logs ordenados por fecha descendente (los más recientes primero)
     logs = LogInventario.query.order_by(LogInventario.fecha.desc()).all()
     return render_template('lista_logs.html', logs=logs)
+
+@main_bp.route('/recompensas')
+@login_required
+def listar_recompensas():
+    # Obtener todas las recompensas disponibles
+    recompensas = Recompensa.query.all()
+
+    # Renderizar la página con las recompensas y los Kuyen Coins del usuario
+    return render_template('recompensas.html', recompensas=recompensas, kuyen_coins=current_user.kuyen_coins)
+
+@main_bp.route('/recompensas/canjear/<int:recompensa_id>', methods=['POST'])
+@login_required
+def canjear_recompensa(recompensa_id):
+    try:
+        # Obtener la recompensa por su ID
+        recompensa = Recompensa.query.get_or_404(recompensa_id)
+
+        # Verificar si el usuario tiene suficientes Kuyen Coins
+        if current_user.kuyen_coins < recompensa.valor:
+            flash("No tienes suficientes Kuyen Coins para canjear esta recompensa.", "danger")
+            return redirect(url_for('main.listar_recompensas'))
+
+        # Restar los Kuyen Coins requeridos
+        current_user.kuyen_coins -= recompensa.valor
+
+        # Registrar el canje (añadir la recompensa al usuario)
+        current_user.recompensas_canjeadas.append(recompensa)
+
+        # Guardar los cambios en la base de datos
+        db.session.commit()
+
+        flash(f"¡Has canjeado la recompensa '{recompensa.nombre}' exitosamente!", "success")
+        return redirect(url_for('main.listar_recompensas'))
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f"Ocurrió un error al canjear la recompensa: {str(e)}", "danger")
+        return redirect(url_for('main.listar_recompensas'))
+    
+@main_bp.route('/recompensas/agregar', methods=['GET', 'POST'])
+@login_required
+def agregar_recompensa():
+    # Verificar si el usuario es administrador
+    if current_user.tipo_usuario != 'admin':
+        flash("No tienes permisos para acceder a esta página.", "danger")
+        return redirect(url_for('main.listar_recompensas'))
+
+    if request.method == 'POST':
+        # Obtener los datos del formulario
+        nombre = request.form['nombre']
+        valor = int(request.form['valor'])
+        descripcion = request.form['descripcion']
+
+        # Crear una nueva recompensa
+        nueva_recompensa = Recompensa(
+            nombre=nombre,
+            valor=valor,
+            descripcion=descripcion
+        )
+
+        # Guardar en la base de datos
+        db.session.add(nueva_recompensa)
+        db.session.commit()
+
+        flash("Recompensa añadida exitosamente.", "success")
+        return redirect(url_for('main.listar_recompensas'))
+
+    # Mostrar el formulario para agregar recompensas
+    return render_template('agregar_recompensa.html')
+
+@main_bp.route('/perfil')
+@login_required
+def perfil_usuario():
+    # Obtener el usuario actual
+    usuario = current_user
+
+    # Obtener las recompensas canjeadas por el usuario
+    recompensas_canjeadas = usuario.recompensas_canjeadas.all()
+
+    # Renderizar la página de perfil con la información del usuario y sus recompensas
+    return render_template('perfil.html', usuario=usuario, recompensas_canjeadas=recompensas_canjeadas)
