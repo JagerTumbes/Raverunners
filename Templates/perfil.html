@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <style>
+        /* Estilos personalizados para eliminar cuadrados blancos */
+        .section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background-color: #f8f9fa; /* Color de fondo suave */
+        }
+        .section-header {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #343a40; /* Color oscuro para destacar */
+        }
+        .info-item {
+            margin-bottom: 0.75rem;
+        }
+        .info-item strong {
+            color: #007bff; /* Color azul para resaltar etiquetas */
+        }
+        table {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container mt-5">
+        <h1 class="text-center">Mi Perfil</h1>
+
+        <!-- Información del Usuario -->
+        <div class="section">
+            <div class="section-header">Información Personal</div>
+            <div class="info-item"><strong>Nombre:</strong> {{ usuario.nombre }}</div>
+            <div class="info-item"><strong>Apellido:</strong> {{ usuario.apellido }}</div>
+            <div class="info-item"><strong>Email:</strong> {{ usuario.email }}</div>
+            <div class="info-item"><strong>Kuyen Coins:</strong> {{ usuario.kuyen_coins }}</div>
+        </div>
+
+        <!-- Recompensas Canjeadas -->
+        <div class="section">
+            <div class="section-header">Recompensas Canjeadas</div>
+            {% if recompensas_canjeadas %}
+                <table class="table table-bordered table-striped">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Valor</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for recompensa in recompensas_canjeadas %}
+                        <tr>
+                            <td>{{ recompensa.nombre }}</td>
+                            <td>{{ recompensa.valor }}</td>
+                            <td>{{ recompensa.descripcion or "Sin descripción" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-center text-muted">No has canjeado ninguna recompensa todavía.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

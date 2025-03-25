@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Canjear Recompensas</title>
+</head>
+<body>
+    {% include 'header.html' %}
+    <div class="container mt-5">
+        <h1 class="text-center">Recompensas Disponibles</h1>
+        <p class="text-center">Tienes <strong>{{ kuyen_coins }}</strong> Kuyen Coins.</p>
+
+        <!-- Botón para Añadir Recompensa (solo visible para administradores) -->
+        {% if current_user.tipo_usuario == 'admin' %}
+        <div class="text-right mb-3">
+            <a href="{{ url_for('main.agregar_recompensa') }}" class="btn btn-primary">Añadir Recompensa</a>
+        </div>
+        {% endif %}
+
+        <table class="table table-bordered table-striped mt-4">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Valor</th>
+                    <th>Descripción</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for recompensa in recompensas %}
+                <tr>
+                    <td>{{ recompensa.nombre }}</td>
+                    <td>{{ recompensa.valor }}</td>
+                    <td>{{ recompensa.descripcion or "Sin descripción" }}</td>
+                    <td>
+                        {% if kuyen_coins >= recompensa.valor %}
+                        <form action="{{ url_for('main.canjear_recompensa', recompensa_id=recompensa.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-success btn-sm">Canjear</button>
+                        </form>
+                        {% else %}
+                        <span class="badge badge-danger">No tienes suficientes Kuyen Coins</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
